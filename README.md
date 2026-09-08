@@ -20,8 +20,15 @@ reference; never commit its contents or modify the only production copy.
 
 ```sh
 npm --prefix frontend install
+cp .env.example .env
 make dev
 ```
+
+The development defaults work without `.env`; copying the example makes them
+easy to change. Values loaded by `make` use POSIX shell syntax and take
+precedence over the parent environment. Set `ENV_FILE=/dev/null` to use only
+exported variables. Production should use service-level environment settings,
+absolute data paths, and a new `ADMIN_SECRET`.
 
 Useful checks:
 

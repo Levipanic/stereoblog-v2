@@ -38,7 +38,7 @@ The detailed order inside phases matters. In particular, do not skip Phase 1.
 
 Goal: create a boring, understandable monorepo that can run Go + Nuxt locally and later on a tiny VPS. No feature porting yet.
 
-## [-] V2-001 — Bootstrap the v2 monorepo
+## [x] V2-001 — Bootstrap the v2 monorepo
 
 **Depends on:** none
 
@@ -82,7 +82,7 @@ Create the actual v2 project skeleton without copying v1 runtime architecture.
 
 ---
 
-## [ ] V2-002 — Unified runtime configuration and `.env.example`
+## [x] V2-002 — Unified runtime configuration and `.env.example`
 
 **Depends on:** V2-001
 
