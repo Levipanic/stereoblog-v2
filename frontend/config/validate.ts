@@ -18,7 +18,15 @@ export function validateHttpUrl(name: string, value: string) {
 export function validateSameOriginPath(name: string, value: string) {
   const base = new URL('https://config.invalid')
   const url = new URL(value, base)
-  if (!value.startsWith('/') || value.startsWith('//') || value.includes('\\') || url.origin !== base.origin) {
+  if (
+    !value.startsWith('/')
+    || value.startsWith('//')
+    || value.includes('\\')
+    || url.origin !== base.origin
+    || url.pathname === '/'
+    || url.search
+    || url.hash
+  ) {
     throw new Error(`${name} must be a same-origin absolute path`)
   }
 }

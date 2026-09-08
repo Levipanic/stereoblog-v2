@@ -13,6 +13,16 @@ validateRuntimeConfig(runtimeConfig)
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-08',
   devtools: { enabled: false },
+  css: ['~/assets/css/main.css'],
+  nitro: {
+    devProxy: {
+      [runtimeConfig.apiBase]: { target: runtimeConfig.internalApiBase.replace(/\/+$/, ''), changeOrigin: true },
+    },
+  },
+  routeRules: {
+    '/admin': { ssr: false },
+    '/admin/**': { ssr: false },
+  },
   runtimeConfig: {
     internalApiBase: runtimeConfig.internalApiBase,
     public: {

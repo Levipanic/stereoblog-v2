@@ -15,8 +15,8 @@ test('accepts valid runtime config', () => {
   assert.doesNotThrow(() => validateRuntimeConfig(valid))
 })
 
-test('rejects external and backslash browser API paths', () => {
-  for (const apiBase of ['https://example.com/api', '//example.com/api', '/\\example.com/api']) {
+test('rejects unsafe browser API paths', () => {
+  for (const apiBase of ['/', '/api?target=x', '/api#target', 'https://example.com/api', '//example.com/api', '/\\example.com/api']) {
     assert.throws(() => validateRuntimeConfig({ ...valid, apiBase }), /NUXT_PUBLIC_API_BASE/)
   }
 })

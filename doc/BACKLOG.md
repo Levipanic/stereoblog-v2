@@ -175,7 +175,7 @@ Create the backend HTTP foundation that later tasks can extend.
 
 ---
 
-## [ ] V2-004 — Minimal Nuxt shell and dev API proxy
+## [x] V2-004 — Minimal Nuxt shell and dev API proxy
 
 **Depends on:** V2-001, V2-002, V2-003
 
