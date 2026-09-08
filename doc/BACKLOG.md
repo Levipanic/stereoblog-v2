@@ -134,7 +134,7 @@ Create a safe root `.env.example` or clearly documented split env files.
 
 ---
 
-## [ ] V2-003 — Minimal Gin server, health, error contract
+## [x] V2-003 — Minimal Gin server, health, error contract
 
 **Depends on:** V2-001, V2-002
 
