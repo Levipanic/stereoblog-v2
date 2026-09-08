@@ -1,0 +1,24 @@
+{
+  "name": "stereodamage-web",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": "24.20.0",
+    "npm": "11.19.0"
+  },
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "nuxt": "4.5.2",
+    "vue": "3.5.42",
+    "vue-router": "5.3.1"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.11"
+  }
+}

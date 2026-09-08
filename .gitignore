@@ -1,0 +1,38 @@
+# Local references and production snapshots
+old_repo/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Runtime data
+data/*
+!data/.gitkeep
+uploads/*
+!uploads/.gitkeep
+backups/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Go
+backend/bin/
+backend/server
+backend/coverage.out
+
+# Node / Nuxt
+frontend/node_modules/
+frontend/.nuxt/
+frontend/.output/
+frontend/dist/
+frontend/coverage/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
