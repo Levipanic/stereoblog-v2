@@ -256,7 +256,7 @@ Owner verifies: repo is clean, both processes run, SSR works, commands are under
 
 Goal: prove Go can safely open and evolve v1 data before building the new product around it.
 
-## [ ] V2-101 — Create sanitized v1 compatibility fixtures
+## [x] V2-101 — Create sanitized v1 compatibility fixtures
 
 **Depends on:** V2-003
 
