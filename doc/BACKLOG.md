@@ -213,7 +213,7 @@ Make Nuxt render a minimal StereoDamage shell and communicate with Gin in dev/SS
 
 ---
 
-## [ ] V2-005 — Root developer workflow commands
+## [x] V2-005 — Root developer workflow commands
 
 **Depends on:** V2-003, V2-004
 

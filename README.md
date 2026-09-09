@@ -19,24 +19,37 @@ reference; never commit its contents or modify the only production copy.
 ## Development
 
 ```sh
-npm --prefix frontend install
-cp .env.example .env
-make dev
+nvm use
+make install-frontend
 ```
 
-The development defaults work without `.env`; copying the example makes them
-easy to change. Values loaded by `make` use POSIX shell syntax and take
-precedence over the parent environment. Set `ENV_FILE=/dev/null` to use only
-exported variables. Production should use service-level environment settings,
-absolute data paths, and a new `ADMIN_SECRET`.
+Frontend commands stop immediately if Node/npm do not match the pinned versions.
+
+Start the processes in two terminals so either can be stopped and restarted
+independently:
+
+```sh
+make dev-backend
+make dev-frontend
+```
+
+Both use safe development defaults. Optionally copy `.env.example` to `.env`
+to override them. Values loaded by the dev commands use POSIX shell syntax and
+take precedence over the parent environment. Set `ENV_FILE=/dev/null` to use
+only exported variables. Production should use service-level environment
+settings, absolute data paths, and a new `ADMIN_SECRET`.
 
 Useful checks:
 
 ```sh
-make test-backend
-make check-frontend
+make test
+make check
 make build
 ```
+
+These commands run without `.env` or production secrets and stop on the first
+failed child command. `make e2e` and `make audit` are reserved hooks that fail
+until their backlog tasks provide real implementations.
 
 This bootstrap intentionally contains no posts, comments, authentication, or
 database implementation. Those are separate backlog tasks.
