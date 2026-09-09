@@ -297,7 +297,7 @@ Create test fixture builder/SQL containing:
 
 ---
 
-## [ ] V2-102 — SQLite connection layer and safe startup inspection
+## [x] V2-102 — SQLite connection layer and safe startup inspection
 
 **Depends on:** V2-101
 

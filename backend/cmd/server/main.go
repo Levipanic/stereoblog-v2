@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/Levipanic/stereoblog-v2/backend/internal/config"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/httpapi"
+	database "github.com/Levipanic/stereoblog-v2/backend/internal/storage/sqlite"
 )
 
 func main() {
@@ -34,6 +36,12 @@ func run(logger *slog.Logger) error {
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
+	db, schema, err := database.Open(context.Background(), cfg.Storage.DatabasePath)
+	if err != nil {
+		return fmt.Errorf("database: %w", err)
+	}
+	defer db.Close()
+	logger.Info("database opened", "path", cfg.Storage.DatabasePath, "schema", schema)
 	router, err := httpapi.NewRouter(cfg, logger)
 	if err != nil {
 		return err
