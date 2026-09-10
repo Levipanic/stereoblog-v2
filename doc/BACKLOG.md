@@ -369,7 +369,7 @@ Create a trustworthy migration mechanism before adding v2 columns.
 
 ---
 
-## [ ] V2-104 — Add and backfill stable post slugs
+## [-] V2-104 — Add and backfill stable post slugs
 
 **Depends on:** V2-103
 
