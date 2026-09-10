@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -104,9 +105,13 @@ type migration struct {
 	version int
 	name    string
 	sql     string
+	apply   func(context.Context, *sql.Conn) error
 }
 
-var migrations = []migration{{1, "v1_baseline", v1BaselineSQL}}
+var migrations = []migration{
+	{version: 1, name: "v1_baseline", sql: v1BaselineSQL},
+	{version: 2, name: "post_slugs", apply: addPostSlugs},
+}
 
 type MigrationResult struct {
 	Version    int
@@ -117,6 +122,9 @@ type MigrationResult struct {
 func Migrate(ctx context.Context, db *sql.DB, databasePath string, schema Schema, production bool) (MigrationResult, error) {
 	applied, err := appliedMigrations(ctx, db, migrations)
 	if err != nil {
+		return MigrationResult{}, err
+	}
+	if err := validateMigratedSchema(ctx, db, applied); err != nil {
 		return MigrationResult{}, err
 	}
 	result := MigrationResult{Version: len(applied)}
@@ -206,7 +214,12 @@ func applyMigrations(ctx context.Context, db *sql.DB, available []migration) (ap
 		return 0, fmt.Errorf("create migration table: %w", err)
 	}
 	for _, migration := range available[len(completed):] {
-		if _, err = conn.ExecContext(ctx, migration.sql); err != nil {
+		if migration.apply != nil {
+			err = migration.apply(ctx, conn)
+		} else {
+			_, err = conn.ExecContext(ctx, migration.sql)
+		}
+		if err != nil {
 			return applied, fmt.Errorf("apply migration %d (%s): %w", migration.version, migration.name, err)
 		}
 		if _, err = conn.ExecContext(ctx, "INSERT INTO schema_migrations (version, name) VALUES (?, ?)", migration.version, migration.name); err != nil {
@@ -214,8 +227,8 @@ func applyMigrations(ctx context.Context, db *sql.DB, available []migration) (ap
 		}
 		applied++
 	}
-	if _, err = inspect(ctx, conn); err != nil {
-		return applied, fmt.Errorf("verify migrated schema: %w", err)
+	if err = validateMigratedSchema(ctx, conn, available); err != nil {
+		return applied, err
 	}
 	if err = integrityCheck(ctx, conn); err != nil {
 		return applied, fmt.Errorf("verify migrated database: %w", err)
@@ -239,6 +252,45 @@ func applyMigrations(ctx context.Context, db *sql.DB, available []migration) (ap
 		return applied, fmt.Errorf("commit migrations: %w", err)
 	}
 	return applied, nil
+}
+
+func validateMigratedSchema(ctx context.Context, db queryer, applied []migration) error {
+	if _, err := inspect(ctx, db); err != nil {
+		return fmt.Errorf("verify migrated schema: %w", err)
+	}
+	if len(applied) < 2 {
+		return nil
+	}
+	signature, err := columnSignature(ctx, db, "posts")
+	if err != nil {
+		return err
+	}
+	required := v1Signatures["posts"] + ",slug:TEXT:0:-:0"
+	if signature != required && !strings.HasPrefix(signature, required+",") {
+		return errors.New("verify migrated schema: incompatible posts.slug column")
+	}
+	index, exists, err := indexSignature(ctx, db, "posts", "idx_posts_slug")
+	if err != nil {
+		return err
+	}
+	if !exists || index != "1:0:slug" {
+		return errors.New("verify migrated schema: incompatible slug index")
+	}
+	var missing int
+	if err := db.QueryRowContext(ctx, "SELECT count(*) FROM posts WHERE slug IS NULL OR slug = ''").Scan(&missing); err != nil {
+		return fmt.Errorf("verify migrated slugs: %w", err)
+	}
+	if missing != 0 {
+		return fmt.Errorf("verify migrated slugs: %d posts have no slug", missing)
+	}
+	var duplicates int
+	if err := db.QueryRowContext(ctx, "SELECT count(*) FROM (SELECT slug FROM posts GROUP BY slug HAVING count(*) > 1)").Scan(&duplicates); err != nil {
+		return fmt.Errorf("verify migrated slug uniqueness: %w", err)
+	}
+	if duplicates != 0 {
+		return fmt.Errorf("verify migrated slug uniqueness: %d duplicate slugs", duplicates)
+	}
+	return nil
 }
 
 func backupDatabase(ctx context.Context, db *sql.DB, databasePath string, now time.Time) (path string, err error) {

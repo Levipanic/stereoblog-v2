@@ -78,6 +78,8 @@ Requirements:
 
 Slug generation must support the actual production titles (including Cyrillic). Use a tested deterministic policy. The admin may edit slugs for new posts before first publish.
 
+The launch policy lowercases and retains Unicode letters, digits, and combining marks attached to them, replacing each run of all other characters with `-`. A title without letters or digits becomes `post`. Backfill processes posts by ascending ID: the first slug keeps its base, collisions use `<base>-<post ID>`, then `<base>-<post ID>-2` if that value is already occupied. This policy is independent of the UI locale and is not rerun when a title changes.
+
 ## `blocks_json` migration policy
 
 Do **not** bulk rewrite all old block JSON merely to match a new editor format.

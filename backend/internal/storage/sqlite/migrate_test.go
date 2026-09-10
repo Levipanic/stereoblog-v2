@@ -25,7 +25,7 @@ func TestMigrateFreshDatabaseAndSkipCompletedMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Version != 1 || result.Applied != 1 || result.BackupPath != "" {
+	if result.Version != len(migrations) || result.Applied != len(migrations) || result.BackupPath != "" {
 		t.Fatalf("unexpected first migration result: %#v", result)
 	}
 	if migratedSchema, err := Inspect(context.Background(), db); err != nil || migratedSchema != SchemaV1 {
@@ -36,15 +36,15 @@ func TestMigrateFreshDatabaseAndSkipCompletedMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Version != 1 || result.Applied != 0 || result.BackupPath != "" {
+	if result.Version != len(migrations) || result.Applied != 0 || result.BackupPath != "" {
 		t.Fatalf("unexpected repeated migration result: %#v", result)
 	}
 	var records int
 	if err := db.QueryRow("SELECT count(*) FROM schema_migrations").Scan(&records); err != nil {
 		t.Fatal(err)
 	}
-	if records != 1 {
-		t.Fatalf("migration records = %d, want 1", records)
+	if records != len(migrations) {
+		t.Fatalf("migration records = %d, want %d", records, len(migrations))
 	}
 }
 
@@ -61,7 +61,7 @@ func TestMigrateV1PreservesDataAndIntegrity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Version != 1 || result.Applied != 1 || result.BackupPath != "" {
+	if result.Version != len(migrations) || result.Applied != len(migrations) || result.BackupPath != "" {
 		t.Fatalf("unexpected migration result: %#v", result)
 	}
 	if after := databaseContents(t, db); !reflect.DeepEqual(after, before) {
@@ -78,7 +78,7 @@ func TestFailedMigrationRollsBackAndIsNotRecorded(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer db.Close()
-		broken := []migration{{1, "broken", "CREATE TABLE must_rollback (id INTEGER); INSERT INTO must_rollback VALUES (1); invalid SQL"}}
+		broken := []migration{{version: 1, name: "broken", sql: "CREATE TABLE must_rollback (id INTEGER); INSERT INTO must_rollback VALUES (1); invalid SQL"}}
 		if _, err := applyMigrations(context.Background(), db, broken); err == nil {
 			t.Fatal("broken initial migration succeeded")
 		}
@@ -103,7 +103,7 @@ func TestFailedMigrationRollsBackAndIsNotRecorded(t *testing.T) {
 		}
 
 		broken := append([]migration{}, migrations...)
-		broken = append(broken, migration{2, "broken", "CREATE TABLE must_rollback (id INTEGER); INSERT INTO must_rollback VALUES (1); invalid SQL"})
+		broken = append(broken, migration{version: len(broken) + 1, name: "broken", sql: "CREATE TABLE must_rollback (id INTEGER); INSERT INTO must_rollback VALUES (1); invalid SQL"})
 		if _, err := applyMigrations(context.Background(), db, broken); err == nil {
 			t.Fatal("broken migration succeeded")
 		}
@@ -114,7 +114,7 @@ func TestFailedMigrationRollsBackAndIsNotRecorded(t *testing.T) {
 		if err := db.QueryRow("SELECT max(version) FROM schema_migrations").Scan(&version); err != nil {
 			t.Fatal(err)
 		}
-		if table != 0 || version != 1 {
+		if table != 0 || version != len(migrations) {
 			t.Fatalf("failed migration leaked changes: table=%d version=%d", table, version)
 		}
 	})
@@ -184,7 +184,7 @@ func TestRejectsInvalidMigrationMetadata(t *testing.T) {
 	for _, record := range []struct {
 		version int
 		name    string
-	}{{1, "wrong_name"}, {2, "unknown"}} {
+	}{{1, "wrong_name"}, {len(migrations) + 1, "unknown"}} {
 		t.Run(record.name, func(t *testing.T) {
 			db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "state.db"))
 			if err != nil {
@@ -216,7 +216,7 @@ func TestRejectsMalformedMigrationTableAndCompiledOrder(t *testing.T) {
 	if _, err := appliedMigrations(context.Background(), db, migrations); err == nil {
 		t.Fatal("malformed migration table was accepted")
 	}
-	if _, err := appliedMigrations(context.Background(), db, []migration{{2, "out_of_order", "SELECT 1"}}); err == nil {
+	if _, err := appliedMigrations(context.Background(), db, []migration{{version: 2, name: "out_of_order", sql: "SELECT 1"}}); err == nil {
 		t.Fatal("out-of-order compiled migration was accepted")
 	}
 }
@@ -226,7 +226,11 @@ func databaseContents(t *testing.T, db *sql.DB) map[string][][]string {
 	tables := []string{"posts", "comments", "like_events", "comment_like_events", "comment_attempts", "comment_mutes", "comment_challenge_uses", "admin_sessions"}
 	contents := make(map[string][][]string, len(tables))
 	for _, table := range tables {
-		rows, err := db.Query("SELECT * FROM " + table + " ORDER BY rowid")
+		query := "SELECT * FROM " + table + " ORDER BY rowid"
+		if table == "posts" {
+			query = "SELECT id, title, blocks_json, likes_count, created_at, preview_media FROM posts ORDER BY id"
+		}
+		rows, err := db.Query(query)
 		if err != nil {
 			t.Fatalf("read %s: %v", table, err)
 		}
