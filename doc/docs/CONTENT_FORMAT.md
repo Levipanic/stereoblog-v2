@@ -71,6 +71,10 @@ The exact inline schema may be refined during the editor task, but it must obey 
 
 Keeping `text` means an emergency rollback to v1 can still show the textual substance of rich v2 paragraph/heading/quote blocks even if it cannot reproduce inline formatting.
 
+The initial canonical inline schema contains only `text` nodes and the `bold`, `italic`, `link`, and `code` marks. Link marks accept `http`, `https`, and `mailto` URLs plus same-origin absolute paths and fragment links; script/data schemes, protocol-relative URLs, credentials, controls, and whitespace are rejected. Server validation always regenerates the block's plain `text` fallback from inline node text.
+
+Public reads keep unsupported legacy blocks as opaque, non-renderable entries without exposing their raw JSON. Canonical saves reject those entries with an indexed error rather than silently deleting them; the author must explicitly remove or replace an unsupported block before saving.
+
 ## Initial rich-text feature set
 
 Launch editor should prioritize common long-read needs and avoid becoming Google Docs.
