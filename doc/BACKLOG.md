@@ -330,7 +330,7 @@ Open v1/fresh SQLite safely with deliberate pragmas/pool settings.
 
 ---
 
-## [ ] V2-103 — Ordered migration runner + pre-migration safety backup
+## [-] V2-103 — Ordered migration runner + pre-migration safety backup
 
 **Depends on:** V2-102
 
