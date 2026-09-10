@@ -21,6 +21,11 @@ const (
 
 type Schema string
 
+type queryer interface {
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+}
+
 const (
 	SchemaFresh Schema = "fresh"
 	SchemaV1    Schema = "v1"
@@ -51,6 +56,31 @@ var requiredForeignKeys = map[string][]string{
 var requiredUniqueColumns = map[string][]string{
 	"admin_sessions": {"token_hash"},
 	"comment_mutes":  {"ip_hash"},
+}
+
+var requiredIndexes = map[string]map[string]string{
+	"comments": {
+		"idx_comments_post_parent":    "0:0:post_id,parent_id,id",
+		"idx_comments_status_created": "0:0:status,created_at",
+	},
+	"like_events": {
+		"idx_like_events_post_ip_created": "0:0:post_id,ip_hash,created_at",
+	},
+	"comment_like_events": {
+		"idx_comment_like_events_comment_ip_created": "0:0:comment_id,ip_hash,created_at",
+	},
+	"comment_attempts": {
+		"idx_comment_attempts_ip_time":           "0:0:ip_hash,created_at",
+		"idx_comment_attempts_post_time":         "0:0:post_id,created_at",
+		"idx_comment_attempts_ip_post_hash_time": "0:0:ip_hash,post_id,text_hash,created_at",
+		"idx_comment_attempts_ip_status_time":    "0:0:ip_hash,status,created_at",
+	},
+	"comment_mutes": {
+		"idx_comment_mutes_until": "0:0:muted_until",
+	},
+	"admin_sessions": {
+		"idx_admin_sessions_expires_at": "0:0:expires_at",
+	},
 }
 
 func Open(ctx context.Context, path string) (*sql.DB, Schema, error) {
@@ -84,6 +114,10 @@ func Open(ctx context.Context, path string) (*sql.DB, Schema, error) {
 }
 
 func Inspect(ctx context.Context, db *sql.DB) (Schema, error) {
+	return inspect(ctx, db)
+}
+
+func inspect(ctx context.Context, db queryer) (Schema, error) {
 	if err := quickCheck(ctx, db); err != nil {
 		return "", err
 	}
@@ -158,6 +192,15 @@ func Inspect(ctx context.Context, db *sql.DB) (Schema, error) {
 				}
 			}
 		}
+		for name, required := range requiredIndexes[table] {
+			actual, exists, err := indexSignature(ctx, db, table, name)
+			if err != nil {
+				return "", err
+			}
+			if !exists || actual != required {
+				incompatible = append(incompatible, "index "+name)
+			}
+		}
 	}
 	for _, table := range []string{"posts", "comments", "like_events", "comment_like_events", "comment_attempts", "comment_mutes", "admin_sessions"} {
 		var ddl string
@@ -175,7 +218,7 @@ func Inspect(ctx context.Context, db *sql.DB) (Schema, error) {
 	return SchemaV1, nil
 }
 
-func quickCheck(ctx context.Context, db *sql.DB) error {
+func quickCheck(ctx context.Context, db queryer) error {
 	var result string
 	if err := db.QueryRowContext(ctx, "PRAGMA quick_check(1)").Scan(&result); err != nil {
 		return databaseError("check database", err)
@@ -186,7 +229,18 @@ func quickCheck(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-func columnSignature(ctx context.Context, db *sql.DB, table string) (string, error) {
+func integrityCheck(ctx context.Context, db queryer) error {
+	var result string
+	if err := db.QueryRowContext(ctx, "PRAGMA integrity_check").Scan(&result); err != nil {
+		return databaseError("check database integrity", err)
+	}
+	if result != "ok" {
+		return fmt.Errorf("%w: integrity check failed", ErrCorruptDatabase)
+	}
+	return nil
+}
+
+func columnSignature(ctx context.Context, db queryer, table string) (string, error) {
 	rows, err := db.QueryContext(ctx, "SELECT name, [type], [notnull], dflt_value, pk FROM pragma_table_info(?) ORDER BY cid", table)
 	if err != nil {
 		return "", fmt.Errorf("inspect table %s: %w", table, err)
@@ -212,7 +266,7 @@ func columnSignature(ctx context.Context, db *sql.DB, table string) (string, err
 	return strings.Join(columns, ","), nil
 }
 
-func foreignKeys(ctx context.Context, db *sql.DB, table string) ([]string, error) {
+func foreignKeys(ctx context.Context, db queryer, table string) ([]string, error) {
 	rows, err := db.QueryContext(ctx, "SELECT [from], [table], [to], on_delete FROM pragma_foreign_key_list(?)", table)
 	if err != nil {
 		return nil, fmt.Errorf("inspect table %s foreign keys: %w", table, err)
@@ -232,7 +286,7 @@ func foreignKeys(ctx context.Context, db *sql.DB, table string) ([]string, error
 	return keys, nil
 }
 
-func uniqueColumns(ctx context.Context, db *sql.DB, table string) ([]string, error) {
+func uniqueColumns(ctx context.Context, db queryer, table string) ([]string, error) {
 	rows, err := db.QueryContext(ctx, "SELECT name FROM pragma_index_list(?) WHERE [unique] = 1 AND partial = 0", table)
 	if err != nil {
 		return nil, fmt.Errorf("inspect table %s unique constraints: %w", table, err)
@@ -279,6 +333,33 @@ func uniqueColumns(ctx context.Context, db *sql.DB, table string) ([]string, err
 		result = append(result, strings.Join(columns, ","))
 	}
 	return result, nil
+}
+
+func indexSignature(ctx context.Context, db queryer, table, index string) (string, bool, error) {
+	var unique, partial int
+	if err := db.QueryRowContext(ctx, "SELECT [unique], partial FROM pragma_index_list(?) WHERE name = ?", table, index).Scan(&unique, &partial); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", false, nil
+		}
+		return "", false, fmt.Errorf("inspect index %s: %w", index, err)
+	}
+	rows, err := db.QueryContext(ctx, "SELECT name FROM pragma_index_info(?) ORDER BY seqno", index)
+	if err != nil {
+		return "", false, fmt.Errorf("inspect index %s: %w", index, err)
+	}
+	defer rows.Close()
+	var columns []string
+	for rows.Next() {
+		var column string
+		if err := rows.Scan(&column); err != nil {
+			return "", false, fmt.Errorf("inspect index %s: %w", index, err)
+		}
+		columns = append(columns, column)
+	}
+	if err := rows.Err(); err != nil {
+		return "", false, fmt.Errorf("inspect index %s: %w", index, err)
+	}
+	return fmt.Sprintf("%d:%d:%s", unique, partial, strings.Join(columns, ",")), true, nil
 }
 
 func databaseError(action string, err error) error {

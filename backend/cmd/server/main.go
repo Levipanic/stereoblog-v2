@@ -41,7 +41,11 @@ func run(logger *slog.Logger) error {
 		return fmt.Errorf("database: %w", err)
 	}
 	defer db.Close()
-	logger.Info("database opened", "path", cfg.Storage.DatabasePath, "schema", schema)
+	migration, err := database.Migrate(context.Background(), db, cfg.Storage.DatabasePath, schema, cfg.IsProduction())
+	if err != nil {
+		return fmt.Errorf("database migration: %w", err)
+	}
+	logger.Info("database ready", "path", cfg.Storage.DatabasePath, "initial_schema", schema, "migration_version", migration.Version, "migrations_applied", migration.Applied, "backup_created", migration.BackupPath != "", "backup_path", migration.BackupPath)
 	router, err := httpapi.NewRouter(cfg, logger)
 	if err != nil {
 		return err

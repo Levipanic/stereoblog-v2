@@ -206,6 +206,28 @@ func TestPartialUniqueIndexDoesNotSatisfyConstraint(t *testing.T) {
 	}
 }
 
+func TestOpenRejectsIncorrectRequiredIndex(t *testing.T) {
+	path := testfixture.V1Database(t)
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec("DROP INDEX idx_comments_post_parent; CREATE INDEX idx_comments_post_parent ON comments(post_id)"); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	opened, _, err := Open(context.Background(), path)
+	if opened != nil {
+		opened.Close()
+		t.Fatal("database with an incorrect required index remained open")
+	}
+	if !errors.Is(err, ErrUnsupportedSchema) {
+		t.Fatalf("error = %v, want ErrUnsupportedSchema", err)
+	}
+}
+
 func TestOpenRejectsCorruptDatabase(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "corrupt.db")
 	if err := os.WriteFile(path, []byte("not a sqlite database"), 0o600); err != nil {

@@ -152,6 +152,8 @@ A production-safe approach is preferred:
 - verify backup opens before proceeding where practical;
 - avoid accumulating unbounded automatic backups forever; document cleanup policy rather than silently deleting recent safety backups.
 
+Production startup writes verified snapshots to `<database directory>/backups/pre-v2-migration-<UTC timestamp>-<unique suffix>/blog.db` before pending migrations on an existing database. These snapshots are never overwritten or deleted automatically; after an external backup and restore check, the owner may remove obsolete local snapshots during routine maintenance.
+
 If automatic backup cannot be made safely, startup should fail with a clear instruction rather than applying risky migrations blindly in production mode.
 
 ## Rollback philosophy
