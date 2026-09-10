@@ -407,7 +407,7 @@ Add canonical slug identity while preserving numeric IDs and all old data.
 
 ---
 
-## [ ] V2-105 — Legacy block parser + v2 rich inline schema validation
+## [-] V2-105 — Legacy block parser + v2 rich inline schema validation
 
 **Depends on:** V2-102
 
