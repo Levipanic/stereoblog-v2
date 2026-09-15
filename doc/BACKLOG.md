@@ -613,7 +613,7 @@ Return visible comments/replies in a shape convenient for the new UI.
 
 ---
 
-## [ ] V2-205 — Comment challenge and antispam parity port
+## [x] V2-205 — Comment challenge and antispam parity port
 
 **Depends on:** V2-204
 

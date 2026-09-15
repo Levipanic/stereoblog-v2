@@ -4,6 +4,8 @@ go 1.27.1
 
 require (
 	github.com/gin-gonic/gin v1.12.0
+	github.com/rivo/uniseg v0.4.7
+	golang.org/x/text v0.34.0
 	modernc.org/sqlite v1.58.0
 )
 
@@ -39,7 +41,6 @@ require (
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	modernc.org/libc v1.75.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect

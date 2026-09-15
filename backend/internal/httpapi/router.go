@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/Levipanic/stereoblog-v2/backend/internal/antispam"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/comments"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/config"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/posts"
@@ -44,12 +45,15 @@ func NewRouter(cfg config.Config, logger *slog.Logger, db *sql.DB) (*gin.Engine,
 	})
 	postRepository := posts.NewRepository(db)
 	commentRepository := comments.NewRepository(db)
+	antispamService := antispam.New(db, cfg.Comments)
 	likeLimiter := newFixedWindowLimiter(likeRateLimitWindow, cfg.Likes.RateLimitMax)
+	commentLimiter := newFixedWindowLimiter(cfg.Comments.AttemptRateLimitWindow, cfg.Comments.AttemptRateLimitMax)
 	router.GET("/api/v1/posts", feedHandler(postRepository, logger))
 	router.GET("/api/v1/posts/by-id/:id", postSlugByIDHandler(postRepository, logger))
 	router.GET("/api/v1/posts/:post", postBySlugHandler(postRepository, logger))
 	router.POST("/api/v1/posts/:id/likes", postLikeHandler(postRepository, cfg.Likes, likeLimiter, logger))
 	router.GET("/api/v1/posts/:post/comments", commentsByPostHandler(commentRepository, logger))
+	router.GET("/api/v1/posts/:post/comments/challenge", commentChallengeHandler(antispamService, postRepository, commentLimiter, logger))
 	router.NoRoute(func(c *gin.Context) {
 		writeError(c, http.StatusNotFound, "not_found", "Resource not found.")
 	})

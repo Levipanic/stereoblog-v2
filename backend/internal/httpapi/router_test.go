@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/Levipanic/stereoblog-v2/backend/internal/antispam"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/comments"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/config"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/posts"
@@ -253,6 +254,60 @@ func TestPublicCommentsAPI(t *testing.T) {
 		if response.Code != tt.status || body.Error.Code != tt.code {
 			t.Fatalf("%s returned %d %#v", tt.path, response.Code, body)
 		}
+	}
+}
+
+func TestCommentChallengeAPI(t *testing.T) {
+	cfg := config.Config{Comments: config.Comments{ChallengeSalt: "test-challenge-salt", ChallengeTTL: 30 * time.Minute, ChallengeClockSkew: time.Minute, AttemptRateLimitWindow: time.Minute, AttemptRateLimitMax: 20}}
+	router := newFixtureRouterWithConfig(t, cfg)
+	response := performRequest(router, http.MethodGet, "/api/v1/posts/1/comments/challenge", "")
+	var challenge antispam.Challenge
+	if err := json.Unmarshal(response.Body.Bytes(), &challenge); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusOK || challenge.Token == "" || challenge.HoneypotField == "" || challenge.ExpiresInSeconds != 1800 {
+		t.Fatalf("unexpected challenge response: %d %#v", response.Code, challenge)
+	}
+	if response.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("challenge cache policy = %q", response.Header().Get("Cache-Control"))
+	}
+	if _, err := antispam.New(nil, cfg.Comments).VerifyChallenge(challenge.Token, 1); err != nil {
+		t.Fatalf("HTTP challenge cannot be verified: %v", err)
+	}
+	if strings.Contains(response.Body.String(), "salt") || strings.Contains(response.Body.String(), "token_hash") {
+		t.Fatalf("challenge response leaked internals: %s", response.Body.String())
+	}
+	for _, tt := range []struct {
+		path   string
+		status int
+		code   string
+	}{
+		{"/api/v1/posts/nope/comments/challenge", http.StatusBadRequest, "invalid_post_id"},
+		{"/api/v1/posts/999/comments/challenge", http.StatusNotFound, "post_not_found"},
+	} {
+		response = performRequest(router, http.MethodGet, tt.path, "")
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != tt.status || body.Error.Code != tt.code {
+			t.Fatalf("%s returned %d %#v", tt.path, response.Code, body)
+		}
+	}
+
+	rateConfig := cfg
+	rateConfig.Comments.AttemptRateLimitMax = 1
+	rateRouter := newFixtureRouterWithConfig(t, rateConfig)
+	if response := performRequest(rateRouter, http.MethodGet, "/api/v1/posts/1/comments/challenge", ""); response.Code != http.StatusOK {
+		t.Fatalf("first challenge request returned %d", response.Code)
+	}
+	response = performRequest(rateRouter, http.MethodGet, "/api/v1/posts/1/comments/challenge", "")
+	var body errorResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusTooManyRequests || body.Error.Code != "comment_rate_limited" || response.Header().Get("Retry-After") == "" {
+		t.Fatalf("challenge rate limit returned %d %#v", response.Code, body)
 	}
 }
 
