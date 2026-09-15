@@ -447,7 +447,7 @@ Establish canonical Go types and validation for old and future rich text without
 
 ---
 
-## [ ] V2-106 — Compatibility audit command
+## [x] V2-106 — Compatibility audit command
 
 **Depends on:** V2-103, V2-104, V2-105
 

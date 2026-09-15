@@ -48,8 +48,17 @@ make build
 ```
 
 These commands run without `.env` or production secrets and stop on the first
-failed child command. `make e2e` and `make audit` are reserved hooks that fail
-until their backlog tasks provide real implementations.
+failed child command. `make e2e` is a reserved hook that fails until its backlog
+task provides a real implementation.
 
-This bootstrap intentionally contains no posts, comments, authentication, or
-database implementation. Those are separate backlog tasks.
+The backend opens and migrates the configured SQLite database on startup. Never
+point development commands at the only production copy. To audit an already
+migrated disposable copy without changing it:
+
+```sh
+make audit AUDIT_ARGS='-db /absolute/path/to/blog.db -uploads /absolute/path/to/uploads'
+```
+
+The command exits non-zero for integrity, schema, relationship, content, or
+missing-media failures. Posts, comments, authentication, and other product APIs
+are still separate backlog tasks.

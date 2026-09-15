@@ -3,6 +3,7 @@
 .PHONY: check-frontend-tools install-frontend dev-backend dev-frontend test test-backend test-frontend check check-frontend build build-backend build-frontend e2e audit
 
 ENV_FILE ?= .env
+AUDIT_ARGS ?=
 # ponytail: local env files use POSIX shell syntax; add dotenv tooling only if richer syntax becomes necessary.
 LOAD_ENV = set -ae; if [ -f "$(ENV_FILE)" ]; then case "$(ENV_FILE)" in /*) . "$(ENV_FILE)" ;; *) . "./$(ENV_FILE)" ;; esac; fi; set +a;
 
@@ -50,4 +51,4 @@ e2e:
 	@printf '%s\n' 'E2E is not implemented yet; no browser test runner has been added.' >&2; exit 2
 
 audit:
-	@printf '%s\n' 'Compatibility audit is not implemented yet; do not use a production database.' >&2; exit 2
+	$(LOAD_ENV) cd backend && go run ./cmd/audit $(AUDIT_ARGS)

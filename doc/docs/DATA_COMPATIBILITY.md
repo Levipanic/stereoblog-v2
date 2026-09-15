@@ -103,14 +103,20 @@ This drastically reduces migration blast radius.
 
 The owner intends to test against a backup of the live DB repeatedly.
 
-Provide an easy documented command/workflow such as:
+Use this workflow with disposable copies only:
 
-```text
-copy test DB/uploads into runtime fixture
--> run migrations
--> run compatibility audit command/test
--> start v2
+```sh
+# 1. Copy the production DB and uploads to a disposable location.
+# 2. Start v2 once against the copies, wait for "database ready", then stop it.
+ENV_FILE=/dev/null APP_ENV=development DB_PATH=/tmp/stereodamage/blog.db \
+  UPLOADS_PATH=/tmp/stereodamage/uploads make dev-backend
+
+# 3. Audit the migrated copies in read-only mode.
+make audit AUDIT_ARGS='-db /tmp/stereodamage/blog.db -uploads /tmp/stereodamage/uploads'
 ```
+
+`make audit` never migrates or repairs data. It exits non-zero when critical
+compatibility checks fail and lists missing media paths for review.
 
 The audit should report useful counts without exposing private secrets:
 
