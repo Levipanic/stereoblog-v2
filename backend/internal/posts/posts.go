@@ -21,6 +21,7 @@ const (
 )
 
 var ErrInvalidCursor = errors.New("invalid cursor")
+var ErrNotFound = errors.New("post not found")
 
 type Repository struct {
 	db *sql.DB
@@ -53,6 +54,23 @@ type CommentPreview struct {
 	CreatedAt string  `json:"created_at"`
 }
 
+type Post struct {
+	ID             int64                 `json:"id"`
+	Slug           string                `json:"slug"`
+	Title          string                `json:"title"`
+	CreatedAt      string                `json:"created_at"`
+	Likes          int                   `json:"likes"`
+	ReadingMinutes int                   `json:"reading_minutes"`
+	PreviewText    string                `json:"preview_text"`
+	PreviewMedia   *content.PreviewMedia `json:"preview_media"`
+	Blocks         []content.Block       `json:"blocks"`
+}
+
+type IDResolution struct {
+	ID   int64  `json:"id"`
+	Slug string `json:"slug"`
+}
+
 type cursor struct {
 	CreatedAt string `json:"created_at"`
 	ID        int64  `json:"id"`
@@ -60,6 +78,49 @@ type cursor struct {
 
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db: db}
+}
+
+func (r *Repository) BySlug(ctx context.Context, slug string) (Post, error) {
+	var post Post
+	var raw string
+	var preview sql.NullString
+	if err := r.db.QueryRowContext(ctx, `SELECT id, slug, title, blocks_json, preview_media, likes_count, created_at
+		FROM posts WHERE slug = ?`, slug).Scan(&post.ID, &post.Slug, &post.Title, &raw, &preview, &post.Likes, &post.CreatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return post, ErrNotFound
+		}
+		return post, fmt.Errorf("query post by slug: %w", err)
+	}
+	createdAt, err := parseStorageTime(post.CreatedAt)
+	if err != nil {
+		return Post{}, fmt.Errorf("post %d has invalid created_at", post.ID)
+	}
+	post.CreatedAt = createdAt.Format(time.RFC3339)
+	if post.Likes < 0 {
+		post.Likes = 0
+	}
+	post.Blocks, _ = content.ParseBlocksJSON(raw)
+	if post.Blocks == nil {
+		post.Blocks = []content.Block{}
+	}
+	post.PreviewText, post.ReadingMinutes, post.PreviewMedia = content.FeedSummary(post.Blocks)
+	if preview.Valid {
+		if explicit, err := content.ParsePreviewMediaJSON(preview.String); err == nil {
+			post.PreviewMedia = explicit
+		}
+	}
+	return post, nil
+}
+
+func (r *Repository) SlugByID(ctx context.Context, id int64) (IDResolution, error) {
+	result := IDResolution{ID: id}
+	if err := r.db.QueryRowContext(ctx, "SELECT slug FROM posts WHERE id = ?", id).Scan(&result.Slug); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return IDResolution{}, ErrNotFound
+		}
+		return IDResolution{}, fmt.Errorf("resolve post ID: %w", err)
+	}
+	return result, nil
 }
 
 func (r *Repository) Feed(ctx context.Context, encodedCursor string, limit int) (FeedPage, error) {

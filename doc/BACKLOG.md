@@ -529,7 +529,7 @@ Serve efficient feed summaries for Nuxt infinite scroll.
 
 ---
 
-## [ ] V2-202 — Public post-by-slug and legacy ID resolution API
+## [x] V2-202 — Public post-by-slug and legacy ID resolution API
 
 **Depends on:** V2-201
 

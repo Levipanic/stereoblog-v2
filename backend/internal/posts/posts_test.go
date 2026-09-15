@@ -3,8 +3,10 @@ package posts
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 
+	"github.com/Levipanic/stereoblog-v2/backend/internal/content"
 	database "github.com/Levipanic/stereoblog-v2/backend/internal/storage/sqlite"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/testfixture"
 )
@@ -62,6 +64,48 @@ func TestFeedCursorPaginationAndCommentPreviews(t *testing.T) {
 	}
 	if _, err := repository.Feed(context.Background(), "not-a-cursor", 10); err != ErrInvalidCursor {
 		t.Fatalf("invalid cursor error = %v", err)
+	}
+}
+
+func TestPostBySlugAndIDResolution(t *testing.T) {
+	db := migratedFixture(t)
+	repository := NewRepository(db)
+
+	post, err := repository.BySlug(context.Background(), "тестовая-публикация")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if post.ID != 1 || post.Slug != "тестовая-публикация" || len(post.Blocks) != 9 || post.Blocks[4].Type != content.Media {
+		t.Fatalf("unexpected legacy post: %#v", post)
+	}
+	if post.PreviewText != "Привет из синтетической фикстуры." || post.PreviewMedia == nil || post.PreviewMedia.MediaKind != content.Image {
+		t.Fatalf("unexpected post metadata: %#v", post)
+	}
+
+	unknown, err := repository.BySlug(context.Background(), "english-fixture-post")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(unknown.Blocks) != 3 || unknown.Blocks[1].Type != content.Unknown || unknown.Blocks[2].Type != content.Unknown {
+		t.Fatalf("unknown legacy blocks were not handled safely: %#v", unknown.Blocks)
+	}
+	if _, err := db.Exec("UPDATE posts SET blocks_json = 'not json' WHERE id = 2"); err != nil {
+		t.Fatal(err)
+	}
+	broken, err := repository.BySlug(context.Background(), "english-fixture-post")
+	if err != nil || len(broken.Blocks) != 0 {
+		t.Fatalf("malformed legacy document did not degrade safely: post=%#v error=%v", broken, err)
+	}
+
+	resolved, err := repository.SlugByID(context.Background(), 1)
+	if err != nil || resolved.ID != 1 || resolved.Slug != "тестовая-публикация" {
+		t.Fatalf("ID resolution = %#v, %v", resolved, err)
+	}
+	if _, err := repository.BySlug(context.Background(), "missing"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("missing slug error = %v", err)
+	}
+	if _, err := repository.SlugByID(context.Background(), 999); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("missing ID error = %v", err)
 	}
 }
 

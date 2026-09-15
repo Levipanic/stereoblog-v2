@@ -40,7 +40,10 @@ func NewRouter(cfg config.Config, logger *slog.Logger, db *sql.DB) (*gin.Engine,
 	router.GET("/api/v1/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
-	router.GET("/api/v1/posts", feedHandler(posts.NewRepository(db), logger))
+	postRepository := posts.NewRepository(db)
+	router.GET("/api/v1/posts", feedHandler(postRepository, logger))
+	router.GET("/api/v1/posts/by-id/:id", postSlugByIDHandler(postRepository, logger))
+	router.GET("/api/v1/posts/:slug", postBySlugHandler(postRepository, logger))
 	router.NoRoute(func(c *gin.Context) {
 		writeError(c, http.StatusNotFound, "not_found", "Resource not found.")
 	})

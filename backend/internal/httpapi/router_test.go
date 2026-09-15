@@ -69,20 +69,7 @@ func TestJSONErrors(t *testing.T) {
 }
 
 func TestFeedAPIContractAndValidation(t *testing.T) {
-	path := testfixture.V1Database(t)
-	db, schema, err := database.Open(context.Background(), path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { db.Close() })
-	if _, err := database.Migrate(context.Background(), db, path, schema, false); err != nil {
-		t.Fatal(err)
-	}
-	gin.SetMode(gin.TestMode)
-	router, err := NewRouter(config.Config{}, slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)), db)
-	if err != nil {
-		t.Fatal(err)
-	}
+	router := newFixtureRouter(t)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/posts?limit=1", "")
 	var first posts.FeedPage
@@ -117,6 +104,53 @@ func TestFeedAPIContractAndValidation(t *testing.T) {
 			t.Fatal(err)
 		}
 		if response.Code != http.StatusBadRequest || body.Error.Code != code {
+			t.Fatalf("%s returned %d %#v", requestPath, response.Code, body)
+		}
+	}
+}
+
+func TestPostBySlugAndIDResolutionAPI(t *testing.T) {
+	router := newFixtureRouter(t)
+	response := performRequest(router, http.MethodGet, "/api/v1/posts/"+url.PathEscape("тестовая-публикация"), "")
+	var post posts.Post
+	if err := json.Unmarshal(response.Body.Bytes(), &post); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusOK || post.ID != 1 || post.Slug != "тестовая-публикация" || post.Title != "Тестовая публикация" ||
+		post.CreatedAt != "2024-01-02T03:04:05Z" || post.Likes != 7 || post.PreviewText != "Привет из синтетической фикстуры." ||
+		post.PreviewMedia == nil || post.PreviewMedia.Src != "/uploads/fixture-image.jpg" || len(post.Blocks) != 9 || post.ReadingMinutes != 1 {
+		t.Fatalf("unexpected post response: %d %#v", response.Code, post)
+	}
+
+	response = performRequest(router, http.MethodGet, "/api/v1/posts/english-fixture-post", "")
+	if response.Code != http.StatusOK || strings.Contains(response.Body.String(), "future-block") || strings.Contains(response.Body.String(), "payload") || !strings.Contains(response.Body.String(), `"type":"unknown"`) {
+		t.Fatalf("unsafe unknown block response: %d %s", response.Code, response.Body.String())
+	}
+
+	response = performRequest(router, http.MethodGet, "/api/v1/posts/by-id/1", "")
+	var resolved posts.IDResolution
+	if err := json.Unmarshal(response.Body.Bytes(), &resolved); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusOK || resolved.ID != 1 || resolved.Slug != "тестовая-публикация" {
+		t.Fatalf("unexpected ID resolution: %d %#v", response.Code, resolved)
+	}
+
+	for requestPath, want := range map[string]struct {
+		status int
+		code   string
+	}{
+		"/api/v1/posts/missing":    {http.StatusNotFound, "post_not_found"},
+		"/api/v1/posts/by-id":      {http.StatusNotFound, "post_not_found"},
+		"/api/v1/posts/by-id/999":  {http.StatusNotFound, "post_not_found"},
+		"/api/v1/posts/by-id/nope": {http.StatusBadRequest, "invalid_post_id"},
+	} {
+		response = performRequest(router, http.MethodGet, requestPath, "")
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != want.status || body.Error.Code != want.code {
 			t.Fatalf("%s returned %d %#v", requestPath, response.Code, body)
 		}
 	}
@@ -215,6 +249,25 @@ func newTestDatabase(t *testing.T) *sql.DB {
 		t.Fatal(err)
 	}
 	return db
+}
+
+func newFixtureRouter(t *testing.T) *gin.Engine {
+	t.Helper()
+	path := testfixture.V1Database(t)
+	db, schema, err := database.Open(context.Background(), path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { db.Close() })
+	if _, err := database.Migrate(context.Background(), db, path, schema, false); err != nil {
+		t.Fatal(err)
+	}
+	gin.SetMode(gin.TestMode)
+	router, err := NewRouter(config.Config{}, slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)), db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return router
 }
 
 func performRequest(router http.Handler, method, path, body string) *httptest.ResponseRecorder {
