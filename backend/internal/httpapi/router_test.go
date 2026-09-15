@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -309,6 +310,336 @@ func TestCommentChallengeAPI(t *testing.T) {
 	if response.Code != http.StatusTooManyRequests || body.Error.Code != "comment_rate_limited" || response.Header().Get("Retry-After") == "" {
 		t.Fatalf("challenge rate limit returned %d %#v", response.Code, body)
 	}
+}
+
+func TestCommentCreateAPI(t *testing.T) {
+	commentConfig := func() config.Config {
+		return config.Config{
+			Likes: config.Likes{IPHashSalt: "test-salt"},
+			Comments: config.Comments{
+				MaxNameLength:                     80,
+				MaxLength:                         1000,
+				MaxURLCount:                       4,
+				MaxTokenLength:                    120,
+				MaxRepeatedCharRun:                18,
+				MaxRepeatedSymbolRun:              10,
+				MaxRepeatedTokenRun:               12,
+				RandomTextMinLength:               120,
+				RandomTokenMinLength:              12,
+				RandomTokenMinCount:               4,
+				RandomTokenMinShare:               0.5,
+				LowTokenDiversityMinTokenCount:    24,
+				LowTokenDiversityContentMinLength: 180,
+				LowTokenDiversityThreshold:        0.14,
+				AttemptRateLimitWindow:            time.Minute,
+				AttemptRateLimitMax:               40,
+				Cooldown:                          12 * time.Second,
+				BurstWindow:                       time.Minute,
+				BurstMax:                          6,
+				DuplicateWindow:                   3 * time.Minute,
+				PostRateLimitWindow:               2 * time.Minute,
+				PostRateLimitMax:                  30,
+				GlobalRateLimitWindow:             time.Minute,
+				GlobalRateLimitMax:                120,
+				AttemptsTTL:                       24 * time.Hour,
+				ChallengeSalt:                     "test-challenge-salt",
+				ChallengeTTL:                      30 * time.Minute,
+				ChallengeClockSkew:                time.Minute,
+				MuteDuration:                      30 * time.Minute,
+				HoneypotMuteThreshold:             2,
+				RejectedMuteThreshold:             12,
+				AttemptContentMaxLength:           500,
+				AdminListLimit:                    40,
+			},
+			HTTP: config.HTTP{JSONBodyLimit: 256 << 10},
+		}
+	}
+
+	t.Run("anonymous comment visible", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "", "hello world", "", nil))
+		var created commentCreateResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &created); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusCreated || !created.OK || created.Status != "visible" {
+			t.Fatalf("unexpected create response: %d %#v", response.Code, created)
+		}
+		response = performRequest(router, http.MethodGet, "/api/v1/posts/1/comments", "")
+		var items []comments.Comment
+		if err := json.Unmarshal(response.Body.Bytes(), &items); err != nil {
+			t.Fatal(err)
+		}
+		if len(items) != 3 || items[2].Content != "hello world" || items[2].Name != nil {
+			t.Fatalf("created comment not readable: %#v", items)
+		}
+	})
+
+	t.Run("named reply visible", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		parent := int64(10)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "Reader Two", "a quiet reply", "", &parent))
+		if response.Code != http.StatusCreated {
+			t.Fatalf("reply returned %d %s", response.Code, response.Body.String())
+		}
+		response = performRequest(router, http.MethodGet, "/api/v1/posts/1/comments", "")
+		var items []comments.Comment
+		if err := json.Unmarshal(response.Body.Bytes(), &items); err != nil {
+			t.Fatal(err)
+		}
+		reply := items[len(items)-1]
+		if reply.ParentID == nil || *reply.ParentID != 10 || reply.Name == nil || *reply.Name != "Reader Two" {
+			t.Fatalf("reply not stored correctly: %#v", reply)
+		}
+	})
+
+	t.Run("cannot reply across posts", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 2)
+		parent := int64(10)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/2/comments",
+			commentCreateBody(challenge, "", "cross post reply", "", &parent))
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusNotFound || body.Error.Code != "parent_comment_not_found" {
+			t.Fatalf("cross-post reply returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("suspicious comment becomes pending", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "https://spam.example", "Buy now https://a.example https://b.example cash", "", nil))
+		var created commentCreateResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &created); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusAccepted || created.Status != "pending" {
+			t.Fatalf("pending comment returned %d %#v", response.Code, created)
+		}
+		response = performRequest(router, http.MethodGet, "/api/v1/posts/1/comments", "")
+		var items []comments.Comment
+		if err := json.Unmarshal(response.Body.Bytes(), &items); err != nil {
+			t.Fatal(err)
+		}
+		if len(items) != 2 {
+			t.Fatalf("pending comment leaked into public list: %s", response.Body.String())
+		}
+	})
+
+	t.Run("invalid challenge rejected", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(antispam.Challenge{Token: "garbage", HoneypotField: "hp_000000000000"}, "nobody", "hello", "", nil))
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusTooManyRequests || body.Error.Code != "comment_rate_limited" {
+			t.Fatalf("invalid challenge returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("challenge replay rejected", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		first := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "", "once only", "", nil))
+		if first.Code != http.StatusCreated {
+			t.Fatalf("first request returned %d %s", first.Code, first.Body.String())
+		}
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "", "replay attempt", "", nil))
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusTooManyRequests || body.Error.Code != "comment_rate_limited" {
+			t.Fatalf("replay returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("honeypot rejected", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "", "hello world", "spam-site.example", nil))
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusTooManyRequests || body.Error.Code != "comment_rate_limited" {
+			t.Fatalf("honeypot returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("honeypot repeat mutes until retry", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		for i := 0; i < 2; i++ {
+			response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+				commentCreateBody(challenge, "", "spam payload", "spam-site.example", nil))
+			if response.Code != http.StatusTooManyRequests {
+				t.Fatalf("honeypot hit %d returned %d", i, response.Code)
+			}
+			challenge = fetchCommentChallenge(t, router, 1)
+		}
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "", "a real comment", "", nil))
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusTooManyRequests || body.Error.Code != "comment_rate_limited" || response.Header().Get("Retry-After") == "" {
+			t.Fatalf("muted submit returned %d %#v headers=%v", response.Code, body, response.Header())
+		}
+	})
+
+	t.Run("name too long", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, strings.Repeat("n", 81), "hello", "", nil))
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusBadRequest || body.Error.Code != "invalid_name" {
+			t.Fatalf("long name returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("empty content rejected", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "", "", "", nil))
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusBadRequest || body.Error.Code != "invalid_content" {
+			t.Fatalf("empty content returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("malformed json rejected", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments", "{")
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusBadRequest || body.Error.Code != "invalid_body" {
+			t.Fatalf("malformed body returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("oversized json rejected", func(t *testing.T) {
+		cfg := commentConfig()
+		cfg.HTTP.JSONBodyLimit = 1024
+		router := newFixtureRouterWithConfig(t, cfg)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			`{"content":"`+strings.Repeat("a", 4096)+`"}`)
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusBadRequest || body.Error.Code != "invalid_body" {
+			t.Fatalf("oversized body returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("non-json content type rejected", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		response := performRequest(router, http.MethodPost, "/api/v1/posts/1/comments", `{"content":"hello"}`)
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusUnsupportedMediaType || body.Error.Code != "invalid_content_type" {
+			t.Fatalf("non-json returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("invalid post id rejected", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/nope/comments", `{}`)
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusBadRequest || body.Error.Code != "invalid_post_id" {
+			t.Fatalf("invalid post returned %d %#v", response.Code, body)
+		}
+	})
+
+	t.Run("cooldown rate limit after success", func(t *testing.T) {
+		router := newFixtureRouterWithConfig(t, commentConfig())
+		challenge := fetchCommentChallenge(t, router, 1)
+		first := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "", "first message", "", nil))
+		if first.Code != http.StatusCreated {
+			t.Fatalf("first request returned %d %s", first.Code, first.Body.String())
+		}
+		challenge = fetchCommentChallenge(t, router, 1)
+		response := performJSONRequest(router, http.MethodPost, "/api/v1/posts/1/comments",
+			commentCreateBody(challenge, "", "second message", "", nil))
+		var body errorResponse
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != http.StatusTooManyRequests || body.Error.Code != "comment_rate_limited" || response.Header().Get("Retry-After") == "" {
+			t.Fatalf("cooldown returned %d %#v headers=%v", response.Code, body, response.Header())
+		}
+	})
+}
+
+func fetchCommentChallenge(t *testing.T, router http.Handler, postID int64) antispam.Challenge {
+	t.Helper()
+	response := performRequest(router, http.MethodGet,
+		"/api/v1/posts/"+strconv.FormatInt(postID, 10)+"/comments/challenge", "")
+	if response.Code != http.StatusOK {
+		t.Fatalf("challenge fetch returned %d %s", response.Code, response.Body.String())
+	}
+	var challenge antispam.Challenge
+	if err := json.Unmarshal(response.Body.Bytes(), &challenge); err != nil {
+		t.Fatal(err)
+	}
+	if challenge.Token == "" || challenge.HoneypotField == "" {
+		t.Fatalf("empty challenge: %#v", challenge)
+	}
+	return challenge
+}
+
+func commentCreateBody(challenge antispam.Challenge, name, content, website string, parentID *int64) string {
+	payload := map[string]any{
+		"name": name, "content": content, "challenge_token": challenge.Token,
+		"website": website, challenge.HoneypotField: "",
+	}
+	if parentID != nil {
+		payload["parent_id"] = *parentID
+	}
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		panic(err)
+	}
+	return string(encoded)
+}
+
+func performJSONRequest(router http.Handler, method, path, body string) *httptest.ResponseRecorder {
+	request := httptest.NewRequest(method, path, strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	return response
 }
 
 func TestRecoveryDoesNotExposePanic(t *testing.T) {

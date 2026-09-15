@@ -31,7 +31,7 @@ func postLikeHandler(repository *posts.Repository, cfg config.Likes, limiter *fi
 			writeError(c, http.StatusTooManyRequests, "like_rate_limited", "Too many like requests. Please wait and try again.")
 			return
 		}
-		postID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		postID, err := strconv.ParseInt(c.Param("post"), 10, 64)
 		if err != nil || postID <= 0 {
 			writeError(c, http.StatusBadRequest, "invalid_post_id", "Post ID must be a positive integer.")
 			return

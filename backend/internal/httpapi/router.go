@@ -51,9 +51,10 @@ func NewRouter(cfg config.Config, logger *slog.Logger, db *sql.DB) (*gin.Engine,
 	router.GET("/api/v1/posts", feedHandler(postRepository, logger))
 	router.GET("/api/v1/posts/by-id/:id", postSlugByIDHandler(postRepository, logger))
 	router.GET("/api/v1/posts/:post", postBySlugHandler(postRepository, logger))
-	router.POST("/api/v1/posts/:id/likes", postLikeHandler(postRepository, cfg.Likes, likeLimiter, logger))
+	router.POST("/api/v1/posts/:post/likes", postLikeHandler(postRepository, cfg.Likes, likeLimiter, logger))
 	router.GET("/api/v1/posts/:post/comments", commentsByPostHandler(commentRepository, logger))
 	router.GET("/api/v1/posts/:post/comments/challenge", commentChallengeHandler(antispamService, postRepository, commentLimiter, logger))
+	router.POST("/api/v1/posts/:post/comments", commentCreateHandler(antispamService, commentRepository, commentLimiter, cfg, logger))
 	router.NoRoute(func(c *gin.Context) {
 		writeError(c, http.StatusNotFound, "not_found", "Resource not found.")
 	})

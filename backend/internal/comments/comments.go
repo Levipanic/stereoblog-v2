@@ -30,6 +30,79 @@ func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db: db}
 }
 
+type CreateInput struct {
+	PostID           int64
+	ParentID         *int64
+	Name             *string
+	Content          string
+	Status           string
+	ModerationReason string
+	TextHash         string
+	Fingerprint      string
+}
+
+func (r *Repository) Create(ctx context.Context, input CreateInput) (int64, error) {
+	result, err := r.db.ExecContext(ctx, `INSERT INTO comments
+		(post_id, parent_id, name, content, status, moderation_reason, text_hash, text_fingerprint, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		input.PostID, positiveID(input.ParentID), nullableText(input.Name), input.Content, input.Status,
+		nullableTextString(input.ModerationReason), nullableTextString(input.TextHash), nullableTextString(input.Fingerprint),
+		database.FormatTime(time.Now()))
+	if err != nil {
+		return 0, fmt.Errorf("insert comment: %w", err)
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("read inserted comment id: %w", err)
+	}
+	return id, nil
+}
+
+func (r *Repository) PostExists(ctx context.Context, postID int64) (bool, error) {
+	var exists int
+	err := r.db.QueryRowContext(ctx, "SELECT 1 FROM posts WHERE id = ?", postID).Scan(&exists)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("find post for comment: %w", err)
+	}
+	return true, nil
+}
+
+func (r *Repository) ParentForPost(ctx context.Context, parentID, postID int64) (bool, error) {
+	var parentPostID int64
+	err := r.db.QueryRowContext(ctx, "SELECT post_id FROM comments WHERE id = ? AND status = 'visible'", parentID).Scan(&parentPostID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("find parent comment: %w", err)
+	}
+	return parentPostID == postID, nil
+}
+
+func positiveID(value *int64) any {
+	if value != nil && *value > 0 {
+		return *value
+	}
+	return nil
+}
+
+func nullableText(value *string) any {
+	if value == nil || *value == "" {
+		return nil
+	}
+	return *value
+}
+
+func nullableTextString(value string) any {
+	if value == "" {
+		return nil
+	}
+	return value
+}
+
 func (r *Repository) ByPostID(ctx context.Context, postID int64) ([]Comment, error) {
 	var exists int
 	if err := r.db.QueryRowContext(ctx, "SELECT 1 FROM posts WHERE id = ?", postID).Scan(&exists); err != nil {

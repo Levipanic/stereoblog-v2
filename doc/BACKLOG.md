@@ -656,7 +656,7 @@ Keep configuration mapping compatible where practical.
 
 ---
 
-## [ ] V2-206 — Comment create/reply endpoint
+## [x] V2-206 — Comment create/reply endpoint
 
 **Depends on:** V2-205
 

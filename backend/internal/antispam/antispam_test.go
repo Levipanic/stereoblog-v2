@@ -101,7 +101,7 @@ func TestContentValidationHashesAndModeration(t *testing.T) {
 	if _, err := service.ValidateContent(strings.Repeat("〰", 11)); err == nil {
 		t.Fatal("extended pictographic repetition was accepted")
 	}
-	if got := truncateUTF16(strings.Repeat("a", 499)+"🙂", 500); !strings.HasSuffix(got, "�") || utf16Length(got) != 500 {
+	if got := truncateUTF16(strings.Repeat("a", 499)+"🙂", 500); !strings.HasSuffix(got, "�") || UTF16Length(got) != 500 {
 		t.Fatalf("UTF-16 truncation = %q", got[len(got)-4:])
 	}
 	if TextHash(" Hello\nWORLD ") != TextHash("hello world") {

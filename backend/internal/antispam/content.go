@@ -37,7 +37,7 @@ func (s *Service) ValidateContent(raw string) (string, error) {
 	if content == "" {
 		return "", validationError("Comment cannot be empty.")
 	}
-	if utf16Length(content) > s.cfg.MaxLength {
+	if UTF16Length(content) > s.cfg.MaxLength {
 		return "", validationError("Comment is too long. Maximum is " + strconv.Itoa(s.cfg.MaxLength) + " characters.")
 	}
 	if countURLs(content) > s.cfg.MaxURLCount {
@@ -45,11 +45,11 @@ func (s *Service) ValidateContent(raw string) (string, error) {
 	}
 	whitespaceTokens := splitJSWhitespace(content)
 	for _, token := range whitespaceTokens {
-		if utf16Length(token) > s.cfg.MaxTokenLength {
+		if UTF16Length(token) > s.cfg.MaxTokenLength {
 			return "", validationError("Comment has an excessively long token. Please shorten it.")
 		}
 	}
-	if utf16Length(content) >= s.cfg.RandomTextMinLength && len(whitespaceTokens) >= s.cfg.RandomTokenMinCount {
+	if UTF16Length(content) >= s.cfg.RandomTextMinLength && len(whitespaceTokens) >= s.cfg.RandomTokenMinCount {
 		random := 0
 		for _, token := range whitespaceTokens {
 			if s.likelyRandomToken(token) {
@@ -118,7 +118,7 @@ func (s *Service) ValidateContent(raw string) (string, error) {
 			return "", spamValidationError(repetitiveMessage)
 		}
 	}
-	if utf16Length(content) >= s.cfg.LowTokenDiversityContentMinLength && len(wordTokens) >= s.cfg.LowTokenDiversityMinTokenCount {
+	if UTF16Length(content) >= s.cfg.LowTokenDiversityContentMinLength && len(wordTokens) >= s.cfg.LowTokenDiversityMinTokenCount {
 		if float64(uniqueCount(wordTokens))/float64(len(wordTokens)) < s.cfg.LowTokenDiversityThreshold {
 			return "", spamValidationError(repetitiveMessage)
 		}
@@ -160,7 +160,7 @@ func normalizeText(value string) string {
 func countURLs(value string) int { return len(urlMarkerPattern.FindAllString(value, -1)) }
 
 func (s *Service) likelyRandomToken(value string) bool {
-	if utf16Length(value) < s.cfg.RandomTokenMinLength {
+	if UTF16Length(value) < s.cfg.RandomTokenMinLength {
 		return false
 	}
 	letters, digits, symbols, vowels := 0, 0, 0, 0
@@ -186,7 +186,7 @@ func (s *Service) likelyRandomToken(value string) bool {
 	if letters >= 2 && letters == len([]rune(value)) {
 		return false
 	}
-	length := utf16Length(value)
+	length := UTF16Length(value)
 	if letters == 0 || float64(len(unique))/float64(length) < 0.45 || float64(vowels)/float64(length) > 0.45 {
 		return false
 	}
@@ -275,7 +275,7 @@ func uniqueCount(values []string) int {
 	return len(unique)
 }
 
-func utf16Length(value string) int { return len(utf16.Encode([]rune(value))) }
+func UTF16Length(value string) int { return len(utf16.Encode([]rune(value))) }
 
 func truncateUTF16(value string, limit int) string {
 	encoded := utf16.Encode([]rune(value))

@@ -99,7 +99,7 @@ func (s *Service) Moderate(source RequestSource, name, content string, stats Sta
 	if urls >= 2 {
 		add("multiple_links", 2)
 	}
-	if urls >= 1 && utf16Length(content) < 80 {
+	if urls >= 1 && UTF16Length(content) < 80 {
 		add("short_link_comment", 2)
 	}
 	if countURLs(name) > 0 {
