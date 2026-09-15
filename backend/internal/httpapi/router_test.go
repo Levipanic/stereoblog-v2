@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -156,6 +157,67 @@ func TestPostBySlugAndIDResolutionAPI(t *testing.T) {
 	}
 }
 
+func TestPostLikeAPIEnforcesCooldownAndRateLimit(t *testing.T) {
+	cfg := config.Config{Likes: config.Likes{Cooldown: time.Minute, RateLimitMax: 20, IPHashSalt: "test-salt"}}
+	router := newFixtureRouterWithConfig(t, cfg)
+	response := performRequest(router, http.MethodPost, "/api/v1/posts/1/likes", "")
+	var result posts.LikeResult
+	if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusOK || !result.Success || result.PostID != 1 || result.Likes != 8 {
+		t.Fatalf("unexpected like response: %d %#v", response.Code, result)
+	}
+	response = performRequest(router, http.MethodPost, "/api/v1/posts/1/likes", "")
+	var body errorResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusTooManyRequests || body.Error.Code != "like_cooldown" || response.Header().Get("Retry-After") == "" {
+		t.Fatalf("unexpected cooldown response: %d %#v headers=%v", response.Code, body, response.Header())
+	}
+
+	rateRouter := newFixtureRouterWithConfig(t, config.Config{Likes: config.Likes{RateLimitMax: 1, IPHashSalt: "test-salt"}})
+	if response := performRequest(rateRouter, http.MethodPost, "/api/v1/posts/1/likes", ""); response.Code != http.StatusOK {
+		t.Fatalf("first rate-limited request returned %d", response.Code)
+	}
+	response = performRequest(rateRouter, http.MethodPost, "/api/v1/posts/2/likes", "")
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusTooManyRequests || body.Error.Code != "like_rate_limited" || response.Header().Get("Retry-After") == "" {
+		t.Fatalf("unexpected rate-limit response: %d %#v", response.Code, body)
+	}
+
+	crossSite := httptest.NewRequest(http.MethodPost, "/api/v1/posts/2/likes", nil)
+	crossSite.Header.Set("Origin", "https://attacker.example")
+	crossSiteResponse := httptest.NewRecorder()
+	router.ServeHTTP(crossSiteResponse, crossSite)
+	if err := json.Unmarshal(crossSiteResponse.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if crossSiteResponse.Code != http.StatusForbidden || body.Error.Code != "cross_site_request" {
+		t.Fatalf("cross-site like returned %d %#v", crossSiteResponse.Code, body)
+	}
+
+	for _, tt := range []struct {
+		path   string
+		status int
+		code   string
+	}{
+		{"/api/v1/posts/nope/likes", http.StatusBadRequest, "invalid_post_id"},
+		{"/api/v1/posts/999/likes", http.StatusNotFound, "post_not_found"},
+	} {
+		response = performRequest(router, http.MethodPost, tt.path, "")
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != tt.status || body.Error.Code != tt.code {
+			t.Fatalf("%s returned %d %#v", tt.path, response.Code, body)
+		}
+	}
+}
+
 func TestRecoveryDoesNotExposePanic(t *testing.T) {
 	var logs bytes.Buffer
 	router, err := NewRouter(config.Config{}, slog.New(slog.NewTextHandler(&logs, nil)), newTestDatabase(t))
@@ -209,6 +271,7 @@ func TestClientIPTrustsOnlyConfiguredProxy(t *testing.T) {
 	}{
 		{"untrusted", config.Config{}, "10.0.0.2"},
 		{"trusted", config.Config{Server: config.Server{TrustProxy: true, TrustedProxyCIDR: []string{"10.0.0.0/8"}}}, "203.0.113.9"},
+		{"canonical IPv6", config.Config{Server: config.Server{TrustProxy: true, TrustedProxyCIDR: []string{"10.0.0.0/8"}}}, "2001:db8::1"},
 	}
 
 	for _, tt := range tests {
@@ -217,7 +280,11 @@ func TestClientIPTrustsOnlyConfiguredProxy(t *testing.T) {
 			router.GET("/test/ip", func(c *gin.Context) { c.String(http.StatusOK, ClientIP(c)) })
 			request := httptest.NewRequest(http.MethodGet, "/test/ip", nil)
 			request.RemoteAddr = "10.0.0.2:1234"
-			request.Header.Set("X-Forwarded-For", "203.0.113.9")
+			forwarded := "203.0.113.9"
+			if tt.name == "canonical IPv6" {
+				forwarded = "2001:0db8:0:0:0:0:0:1"
+			}
+			request.Header.Set("X-Forwarded-For", forwarded)
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 			if response.Body.String() != tt.want {
@@ -252,6 +319,10 @@ func newTestDatabase(t *testing.T) *sql.DB {
 }
 
 func newFixtureRouter(t *testing.T) *gin.Engine {
+	return newFixtureRouterWithConfig(t, config.Config{})
+}
+
+func newFixtureRouterWithConfig(t *testing.T, cfg config.Config) *gin.Engine {
 	t.Helper()
 	path := testfixture.V1Database(t)
 	db, schema, err := database.Open(context.Background(), path)
@@ -263,7 +334,7 @@ func newFixtureRouter(t *testing.T) *gin.Engine {
 		t.Fatal(err)
 	}
 	gin.SetMode(gin.TestMode)
-	router, err := NewRouter(config.Config{}, slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)), db)
+	router, err := NewRouter(cfg, slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)), db)
 	if err != nil {
 		t.Fatal(err)
 	}

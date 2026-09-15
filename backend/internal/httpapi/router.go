@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/netip"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -41,9 +42,11 @@ func NewRouter(cfg config.Config, logger *slog.Logger, db *sql.DB) (*gin.Engine,
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 	postRepository := posts.NewRepository(db)
+	likeLimiter := newFixedWindowLimiter(likeRateLimitWindow, cfg.Likes.RateLimitMax)
 	router.GET("/api/v1/posts", feedHandler(postRepository, logger))
 	router.GET("/api/v1/posts/by-id/:id", postSlugByIDHandler(postRepository, logger))
 	router.GET("/api/v1/posts/:slug", postBySlugHandler(postRepository, logger))
+	router.POST("/api/v1/posts/:id/likes", postLikeHandler(postRepository, cfg.Likes, likeLimiter, logger))
 	router.NoRoute(func(c *gin.Context) {
 		writeError(c, http.StatusNotFound, "not_found", "Resource not found.")
 	})
@@ -55,7 +58,11 @@ func NewRouter(cfg config.Config, logger *slog.Logger, db *sql.DB) (*gin.Engine,
 }
 
 func ClientIP(c *gin.Context) string {
-	return c.ClientIP()
+	ip := c.ClientIP()
+	if address, err := netip.ParseAddr(ip); err == nil {
+		return address.Unmap().String()
+	}
+	return ip
 }
 
 func writeError(c *gin.Context, status int, code, message string) {

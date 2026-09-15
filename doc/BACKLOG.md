@@ -557,7 +557,7 @@ Serve full long-read data by canonical slug and provide numeric-ID resolution fo
 
 ---
 
-## [ ] V2-203 — Post likes parity
+## [x] V2-203 — Post likes parity
 
 **Depends on:** V2-201
 
