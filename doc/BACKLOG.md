@@ -492,7 +492,7 @@ Owner runs migration + audit on an actual production backup copy and manually op
 
 Goal: replace v1 backend behavior with tested Go endpoints while improving API shape for Nuxt.
 
-## [ ] V2-201 — Post repositories and public feed API
+## [x] V2-201 — Post repositories and public feed API
 
 **Depends on:** V2-104, V2-105
 

@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -148,20 +147,8 @@ func Audit(ctx context.Context, databasePath, uploadsPath string) (AuditReport, 
 }
 
 func parsePreviewMedia(raw string) (string, error) {
-	var preview struct {
-		Src       string            `json:"src"`
-		MediaKind content.MediaKind `json:"mediaKind"`
-		Name      string            `json:"name"`
-		Alt       string            `json:"alt"`
-		Caption   string            `json:"caption"`
-	}
-	if err := json.Unmarshal([]byte(raw), &preview); err != nil {
-		return "", err
-	}
-	if _, err := content.MarshalBlocksJSON([]content.Block{{
-		Type: content.Media, MediaKind: preview.MediaKind, Src: preview.Src,
-		Name: preview.Name, Alt: preview.Alt, Caption: preview.Caption,
-	}}); err != nil {
+	preview, err := content.ParsePreviewMediaJSON(raw)
+	if err != nil {
 		return "", err
 	}
 	return preview.Src, nil

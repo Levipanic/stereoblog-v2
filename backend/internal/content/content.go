@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -66,6 +67,16 @@ type Block struct {
 	Caption   string          `json:"caption,omitempty"`
 	Raw       json.RawMessage `json:"-"`
 }
+
+type PreviewMedia struct {
+	MediaKind MediaKind `json:"mediaKind"`
+	Src       string    `json:"src"`
+	Alt       string    `json:"alt"`
+	Caption   string    `json:"caption"`
+	Name      string    `json:"name"`
+}
+
+var wordPattern = regexp.MustCompile(`[\p{L}\p{N}]+`)
 
 type Limits struct {
 	MaxBlocks    int
@@ -150,6 +161,71 @@ func MarshalBlocksJSON(blocks []Block) (string, error) {
 		return "", fmt.Errorf("marshal blocks: %w", err)
 	}
 	return string(encoded), nil
+}
+
+func ParsePreviewMediaJSON(raw string) (*PreviewMedia, error) {
+	var preview PreviewMedia
+	if err := json.Unmarshal([]byte(raw), &preview); err != nil {
+		return nil, err
+	}
+	if _, err := storageBlock(Block{
+		Type: Media, MediaKind: preview.MediaKind, Src: preview.Src,
+		Name: preview.Name, Alt: preview.Alt, Caption: preview.Caption,
+	}); err != nil {
+		return nil, err
+	}
+	preview.Src = strings.TrimSpace(preview.Src)
+	preview.Name = strings.TrimSpace(preview.Name)
+	preview.Alt = strings.TrimSpace(preview.Alt)
+	preview.Caption = strings.TrimSpace(preview.Caption)
+	return &preview, nil
+}
+
+func FeedSummary(blocks []Block) (previewText string, readingMinutes int, previewMedia *PreviewMedia) {
+	var readingText strings.Builder
+	appendText := func(value string) {
+		if value == "" {
+			return
+		}
+		if readingText.Len() != 0 {
+			readingText.WriteByte(' ')
+		}
+		readingText.WriteString(value)
+	}
+	for _, block := range blocks {
+		switch block.Type {
+		case Paragraph, Heading, Quote:
+			if previewText == "" && block.Type == Paragraph {
+				previewText = block.Text
+			}
+			appendText(block.Text)
+		case Media:
+			appendText(strings.Join(nonEmpty(block.Name, block.Alt, block.Caption), " "))
+			media := &PreviewMedia{MediaKind: block.MediaKind, Src: block.Src, Alt: block.Alt, Caption: block.Caption, Name: block.Name}
+			if previewMedia == nil || block.MediaKind == Audio && previewMedia.MediaKind != Audio {
+				previewMedia = media
+			}
+		}
+	}
+	text := readingText.String()
+	if text != "" {
+		words := len(wordPattern.FindAllString(text, -1))
+		if words == 0 {
+			words = (len(utf16.Encode([]rune(text))) + 4) / 5
+		}
+		readingMinutes = max(1, (words+179)/180)
+	}
+	return previewText, readingMinutes, previewMedia
+}
+
+func nonEmpty(values ...string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if value = strings.TrimSpace(value); value != "" {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 func decodeDocument(raw string) ([]json.RawMessage, error) {

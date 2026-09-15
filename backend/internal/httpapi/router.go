@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	"database/sql"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -8,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/Levipanic/stereoblog-v2/backend/internal/config"
+	"github.com/Levipanic/stereoblog-v2/backend/internal/posts"
 )
 
 type errorResponse struct {
@@ -19,7 +22,10 @@ type errorDetail struct {
 	Message string `json:"message"`
 }
 
-func NewRouter(cfg config.Config, logger *slog.Logger) (*gin.Engine, error) {
+func NewRouter(cfg config.Config, logger *slog.Logger, db *sql.DB) (*gin.Engine, error) {
+	if db == nil {
+		return nil, errors.New("database is required")
+	}
 	router := gin.New()
 	trustedProxies := []string(nil)
 	if cfg.Server.TrustProxy {
@@ -34,6 +40,7 @@ func NewRouter(cfg config.Config, logger *slog.Logger) (*gin.Engine, error) {
 	router.GET("/api/v1/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
+	router.GET("/api/v1/posts", feedHandler(posts.NewRepository(db), logger))
 	router.NoRoute(func(c *gin.Context) {
 		writeError(c, http.StatusNotFound, "not_found", "Resource not found.")
 	})

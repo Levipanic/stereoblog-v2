@@ -101,6 +101,34 @@ func TestRichInlineGeneratesStablePlainFallback(t *testing.T) {
 	}
 }
 
+func TestFeedSummaryPreservesV1Derivation(t *testing.T) {
+	blocks, err := ParseBlocksJSON(`[
+		{"type":"heading","level":2,"text":"Heading"},
+		{"type":"paragraph","text":"First paragraph"},
+		{"type":"media","mediaKind":"image","src":"/uploads/image.jpg","alt":"Image"},
+		{"type":"media","mediaKind":"audio","src":"/uploads/audio.mp3","name":"Track"},
+		{"type":"paragraph","text":"Second paragraph"}
+	]`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text, minutes, media := FeedSummary(blocks)
+	if text != "First paragraph" || minutes != 1 {
+		t.Fatalf("summary = %q, %d", text, minutes)
+	}
+	if media == nil || media.MediaKind != Audio || media.Src != "/uploads/audio.mp3" {
+		t.Fatalf("preview media = %#v", media)
+	}
+
+	explicit, err := ParsePreviewMediaJSON(`{"src":"/uploads/cover.jpg","mediaKind":"image","alt":" Cover "}`)
+	if err != nil || explicit.Src != "/uploads/cover.jpg" || explicit.Alt != "Cover" {
+		t.Fatalf("explicit preview = %#v, %v", explicit, err)
+	}
+	if _, err := ParsePreviewMediaJSON(`{"src":"/uploads/../secret","mediaKind":"image"}`); err == nil {
+		t.Fatal("unsafe preview media was accepted")
+	}
+}
+
 func TestPublicReadFallsBackAndCoercesLegacyHeadingLevel(t *testing.T) {
 	raw := `[
 		{"type":"paragraph","text":"legacy fallback","content":[{"type":"html","html":"<script>"}]},
