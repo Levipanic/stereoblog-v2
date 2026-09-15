@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/Levipanic/stereoblog-v2/backend/internal/comments"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/config"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/posts"
 	database "github.com/Levipanic/stereoblog-v2/backend/internal/storage/sqlite"
@@ -209,6 +210,43 @@ func TestPostLikeAPIEnforcesCooldownAndRateLimit(t *testing.T) {
 		{"/api/v1/posts/999/likes", http.StatusNotFound, "post_not_found"},
 	} {
 		response = performRequest(router, http.MethodPost, tt.path, "")
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if response.Code != tt.status || body.Error.Code != tt.code {
+			t.Fatalf("%s returned %d %#v", tt.path, response.Code, body)
+		}
+	}
+}
+
+func TestPublicCommentsAPI(t *testing.T) {
+	router := newFixtureRouter(t)
+	response := performRequest(router, http.MethodGet, "/api/v1/posts/1/comments", "")
+	var items []comments.Comment
+	if err := json.Unmarshal(response.Body.Bytes(), &items); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != http.StatusOK || len(items) != 2 || items[0].ID != 10 || items[1].ID != 11 || items[1].ParentID == nil || *items[1].ParentID != 10 {
+		t.Fatalf("unexpected comments response: %d %#v", response.Code, items)
+	}
+	if strings.Contains(response.Body.String(), "pending") || strings.Contains(response.Body.String(), "rejected") || strings.Contains(response.Body.String(), "moderation_reason") || strings.Contains(response.Body.String(), "text_hash") {
+		t.Fatalf("comments response leaked hidden data: %s", response.Body.String())
+	}
+
+	response = performRequest(router, http.MethodGet, "/api/v1/posts/2/comments", "")
+	if response.Code != http.StatusOK || response.Body.String() != "[]" {
+		t.Fatalf("hidden-only comments response: %d %s", response.Code, response.Body.String())
+	}
+	for _, tt := range []struct {
+		path   string
+		status int
+		code   string
+	}{
+		{"/api/v1/posts/nope/comments", http.StatusBadRequest, "invalid_post_id"},
+		{"/api/v1/posts/999/comments", http.StatusNotFound, "post_not_found"},
+	} {
+		response = performRequest(router, http.MethodGet, tt.path, "")
+		var body errorResponse
 		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 			t.Fatal(err)
 		}

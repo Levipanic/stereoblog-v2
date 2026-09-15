@@ -584,7 +584,7 @@ Port anonymous likes with hashed-IP cooldown/rate behavior safely.
 
 ---
 
-## [ ] V2-204 — Public comment read API
+## [x] V2-204 — Public comment read API
 
 **Depends on:** V2-202
 

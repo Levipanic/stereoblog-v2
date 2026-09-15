@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/Levipanic/stereoblog-v2/backend/internal/comments"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/config"
 	"github.com/Levipanic/stereoblog-v2/backend/internal/posts"
 )
@@ -42,11 +43,13 @@ func NewRouter(cfg config.Config, logger *slog.Logger, db *sql.DB) (*gin.Engine,
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 	postRepository := posts.NewRepository(db)
+	commentRepository := comments.NewRepository(db)
 	likeLimiter := newFixedWindowLimiter(likeRateLimitWindow, cfg.Likes.RateLimitMax)
 	router.GET("/api/v1/posts", feedHandler(postRepository, logger))
 	router.GET("/api/v1/posts/by-id/:id", postSlugByIDHandler(postRepository, logger))
-	router.GET("/api/v1/posts/:slug", postBySlugHandler(postRepository, logger))
+	router.GET("/api/v1/posts/:post", postBySlugHandler(postRepository, logger))
 	router.POST("/api/v1/posts/:id/likes", postLikeHandler(postRepository, cfg.Likes, likeLimiter, logger))
+	router.GET("/api/v1/posts/:post/comments", commentsByPostHandler(commentRepository, logger))
 	router.NoRoute(func(c *gin.Context) {
 		writeError(c, http.StatusNotFound, "not_found", "Resource not found.")
 	})

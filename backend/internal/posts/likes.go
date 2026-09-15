@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	database "github.com/Levipanic/stereoblog-v2/backend/internal/storage/sqlite"
 )
 
 const likeEventRetention = 14 * 24 * time.Hour
@@ -57,7 +59,7 @@ func (r *Repository) Like(ctx context.Context, postID int64, ipHash string, cool
 	err = conn.QueryRowContext(ctx, `SELECT created_at FROM like_events
 		WHERE post_id = ? AND ip_hash = ? ORDER BY datetime(created_at) DESC, id DESC LIMIT 1`, postID, ipHash).Scan(&recent)
 	if err == nil {
-		recentAt, parseErr := parseStorageTime(recent)
+		recentAt, parseErr := database.ParseTime(recent)
 		if parseErr == nil && now.Before(recentAt.Add(cooldown)) {
 			return result, &CooldownError{RetryAfter: recentAt.Add(cooldown).Sub(now)}
 		}
@@ -65,7 +67,7 @@ func (r *Repository) Like(ctx context.Context, postID int64, ipHash string, cool
 		return result, fmt.Errorf("check post like cooldown: %w", err)
 	}
 	err = nil
-	createdAt := now.UTC().Format(storageTimeFormat)
+	createdAt := database.FormatTime(now)
 	if _, err = conn.ExecContext(ctx, "INSERT INTO like_events (post_id, ip_hash, created_at) VALUES (?, ?, ?)", postID, ipHash, createdAt); err != nil {
 		return result, fmt.Errorf("record post like: %w", err)
 	}
@@ -76,7 +78,7 @@ func (r *Repository) Like(ctx context.Context, postID int64, ipHash string, cool
 	if cooldown > retention {
 		retention = cooldown
 	}
-	cutoff := now.UTC().Add(-retention).Format(storageTimeFormat)
+	cutoff := database.FormatTime(now.Add(-retention))
 	if _, err = conn.ExecContext(ctx, "DELETE FROM like_events WHERE datetime(created_at) < datetime(?)", cutoff); err != nil {
 		return result, fmt.Errorf("clean old post likes: %w", err)
 	}

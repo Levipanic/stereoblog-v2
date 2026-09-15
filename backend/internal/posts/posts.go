@@ -11,13 +11,13 @@ import (
 	"time"
 
 	"github.com/Levipanic/stereoblog-v2/backend/internal/content"
+	database "github.com/Levipanic/stereoblog-v2/backend/internal/storage/sqlite"
 )
 
 const (
 	DefaultLimit        = 10
 	MaxLimit            = 50
 	commentPreviewLimit = 2
-	storageTimeFormat   = "2006-01-02 15:04:05"
 )
 
 var ErrInvalidCursor = errors.New("invalid cursor")
@@ -91,7 +91,7 @@ func (r *Repository) BySlug(ctx context.Context, slug string) (Post, error) {
 		}
 		return post, fmt.Errorf("query post by slug: %w", err)
 	}
-	createdAt, err := parseStorageTime(post.CreatedAt)
+	createdAt, err := database.ParseTime(post.CreatedAt)
 	if err != nil {
 		return Post{}, fmt.Errorf("post %d has invalid created_at", post.ID)
 	}
@@ -149,7 +149,7 @@ func (r *Repository) Feed(ctx context.Context, encodedCursor string, limit int) 
 		if err := rows.Scan(&item.ID, &item.Slug, &item.Title, &raw, &preview, &item.Likes, &item.CreatedAt); err != nil {
 			return page, fmt.Errorf("read feed post: %w", err)
 		}
-		createdAt, err := parseStorageTime(item.CreatedAt)
+		createdAt, err := database.ParseTime(item.CreatedAt)
 		if err != nil {
 			return page, fmt.Errorf("post %d has invalid created_at", item.ID)
 		}
@@ -226,7 +226,7 @@ func (r *Repository) addCommentPreviews(ctx context.Context, items []FeedItem) e
 		if name.Valid {
 			preview.Name = &name.String
 		}
-		createdAt, err := parseStorageTime(preview.CreatedAt)
+		createdAt, err := database.ParseTime(preview.CreatedAt)
 		if err != nil {
 			return fmt.Errorf("comment %d has invalid created_at", preview.ID)
 		}
@@ -253,22 +253,10 @@ func decodeCursor(value string) (*cursor, error) {
 	if json.Unmarshal(raw, &result) != nil || result.ID <= 0 {
 		return nil, ErrInvalidCursor
 	}
-	if _, err := parseStorageTime(result.CreatedAt); err != nil {
+	if _, err := database.ParseTime(result.CreatedAt); err != nil {
 		return nil, ErrInvalidCursor
 	}
 	return &result, nil
-}
-
-func parseStorageTime(value string) (time.Time, error) {
-	for _, layout := range []string{storageTimeFormat, "2006-01-02 15:04:05.999999999"} {
-		if parsed, err := time.ParseInLocation(layout, value, time.UTC); err == nil {
-			return parsed, nil
-		}
-	}
-	if parsed, err := time.Parse(time.RFC3339Nano, value); err == nil {
-		return parsed.UTC(), nil
-	}
-	return time.Time{}, errors.New("unsupported SQLite timestamp")
 }
 
 func encodeCursor(item FeedItem) (string, error) {

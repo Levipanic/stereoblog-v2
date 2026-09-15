@@ -14,7 +14,7 @@ import (
 
 func postBySlugHandler(repository *posts.Repository, logger *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		slug := strings.TrimSpace(c.Param("slug"))
+		slug := strings.TrimSpace(c.Param("post"))
 		post, err := repository.BySlug(c.Request.Context(), slug)
 		if errors.Is(err, posts.ErrNotFound) {
 			writeError(c, http.StatusNotFound, "post_not_found", "Post not found.")

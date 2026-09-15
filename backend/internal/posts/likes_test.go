@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	database "github.com/Levipanic/stereoblog-v2/backend/internal/storage/sqlite"
 )
 
 func TestPostLikeIsAtomicAndEnforcesCooldown(t *testing.T) {
@@ -60,7 +62,7 @@ func TestLikeRetentionNeverShortensCooldown(t *testing.T) {
 	repository := NewRepository(db)
 	now := time.Date(2026, 9, 15, 12, 0, 0, 0, time.UTC)
 	hash := HashIP("test-salt", "203.0.113.10")
-	createdAt := now.Add(-20 * 24 * time.Hour).Format(storageTimeFormat)
+	createdAt := database.FormatTime(now.Add(-20 * 24 * time.Hour))
 	if _, err := db.Exec("INSERT INTO like_events (post_id, ip_hash, created_at) VALUES (1, ?, ?)", hash, createdAt); err != nil {
 		t.Fatal(err)
 	}
