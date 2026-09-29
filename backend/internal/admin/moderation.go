@@ -106,9 +106,13 @@ func (m *Moderation) SetStatus(ctx context.Context, id int64, approve bool) erro
 	return affected(result, err)
 }
 func (m *Moderation) DeleteComment(ctx context.Context, id int64) (int64, error) {
-	// Existing foreign keys delete the entire reply subtree and its like events atomically.
+	// Legacy databases may lack a parent_id foreign key; explicitly delete the subtree.
+	// UNION also terminates safely if old data contains a parent cycle.
 	var postID int64
-	err := m.db.QueryRowContext(ctx, "DELETE FROM comments WHERE id=? RETURNING post_id", id).Scan(&postID)
+	err := m.db.QueryRowContext(ctx, `WITH RECURSIVE tree(id) AS (
+		SELECT id FROM comments WHERE id = ?
+		UNION SELECT comments.id FROM comments JOIN tree ON comments.parent_id = tree.id
+	) DELETE FROM comments WHERE id IN (SELECT id FROM tree) RETURNING post_id`, id).Scan(&postID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, ErrNotFound
 	}
