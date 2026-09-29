@@ -683,7 +683,9 @@ Enable anonymous/named comments and replies through the ported antispam pipeline
 
 ---
 
-## [ ] V2-207 — Comment likes parity
+## [-] V2-207 — Comment likes parity
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-204
 
