@@ -816,7 +816,9 @@ Handle SVG deliberately. Preserve safe access to historical SVGs but do not blin
 
 ---
 
-## [ ] V2-211 — Admin moderation API parity
+## [-] V2-211 — Admin moderation API parity
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-208, V2-205, V2-206
 

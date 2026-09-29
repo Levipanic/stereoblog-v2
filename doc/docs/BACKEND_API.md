@@ -56,3 +56,17 @@ and external resources without modifying stored files. This may prevent external
 `GET/HEAD /uploads/*` serves media with nosniff, range support and no directory listing.
 Generic files are attachments; hidden paths and symlinks are rejected. Route `/uploads/*` to Go in
 production to retain these protections (a future proxy implementation must reproduce the policy).
+
+## Moderation
+
+- `GET /admin/moderation`: `{ "pending_comments": [], "attempts": [], "mutes": [] }`.
+  Each list is bounded by `COMMENT_ADMIN_LIST_LIMIT` (1–100), newest first with ID tie-break.
+  Mutes include active records only; GET does not mutate moderation history.
+- `POST /admin/comments/:id/approve`: makes the comment visible and clears its moderation reason.
+- `POST /admin/comments/:id/reject`: hides the comment with `admin_rejected` reason.
+- `DELETE /admin/comments/:id`: atomically deletes the entire reply subtree and its like events.
+- `DELETE /admin/comment-mutes/:id`: removes the mute.
+
+All routes require authentication and all writes require CSRF. Attempts/mutes expose only
+the first 12 characters of the salted IP hash, matching v1. Missing records return 404.
+Comment bodies and reasons remain text; future admin UI must render them as text.
