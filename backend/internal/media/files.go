@@ -144,6 +144,9 @@ func OpenRegular(root *os.Root, name string) (*os.File, error) {
 		if info.Mode()&os.ModeSymlink != 0 {
 			return nil, fs.ErrNotExist
 		}
+		if i == len(parts)-1 && !info.Mode().IsRegular() || i < len(parts)-1 && !info.IsDir() {
+			return nil, fs.ErrNotExist
+		}
 	}
 	f, err := root.Open(name)
 	if err != nil {

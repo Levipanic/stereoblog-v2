@@ -70,3 +70,39 @@ production to retain these protections (a future proxy implementation must repro
 All routes require authentication and all writes require CSRF. Attempts/mutes expose only
 the first 12 characters of the salted IP hash, matching v1. Missing records return 404.
 Comment bodies and reasons remain text; future admin UI must render them as text.
+
+## Portable backup
+
+`POST /admin/backup` requires session + CSRF and downloads `application/zip` with:
+
+```text
+manifest.json
+data/blog.db
+uploads/**
+```
+
+Generation is limited to one request per minute for the owner and one active
+generation/download at a time. A 429 includes `Retry-After`. The handler extends
+its write deadline to 15 minutes; normal API requests retain their short timeout.
+The database is a verified SQLite `VACUUM INTO` snapshot, never a raw live DB copy.
+The snapshot passes the compatibility audit before archival. Missing or unsafe referenced
+media fails the backup rather than reporting an incomplete archive as successful.
+The audit also rejects hidden paths and symlinks, matching the media-serving policy.
+
+Files stream into a private temporary ZIP on disk, then to the response. Media is
+stored without recompression. Memory does not grow with file byte size (ZIP metadata
+still scales with the number of files). Temporary resources are removed on success,
+generation failure or disconnected download. `TMPDIR` controls temporary disk placement.
+The manifest records format/schema versions, UTC creation time, post/comment/media
+counts and the database SHA-256; ZIP CRCs cover each entry.
+
+Only the SQLite snapshot and regular upload files are included. Hidden files/directories
+(including `.env` and in-progress uploads) are excluded; symlinks and special files fail
+the backup. The DB retains hashed session/moderation records, but configuration secrets
+are not included. Treat the archive as private.
+
+Consistency relies on the existing immutable-media policy: upload completes before its
+URL can be saved in a post, and post deletion does not remove media. The DB snapshot is
+taken first, then media copied; concurrent uploads can add harmless unreferenced files.
+Do not externally overwrite/delete upload files during generation. No service shutdown
+is needed. Restore instructions are in `DEPLOYMENT.md`.

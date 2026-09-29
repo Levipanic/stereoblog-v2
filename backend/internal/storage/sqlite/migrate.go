@@ -315,16 +315,22 @@ func backupDatabase(ctx context.Context, db *sql.DB, databasePath string, now ti
 			_ = os.RemoveAll(snapshotDirectory)
 		}
 	}()
-	if _, err = db.ExecContext(ctx, "VACUUM INTO ?", path); err != nil {
-		return "", fmt.Errorf("create SQLite snapshot: %w", err)
-	}
-	if err = os.Chmod(path, 0o600); err != nil {
-		return "", fmt.Errorf("secure backup: %w", err)
-	}
-	if err = verifyBackup(ctx, path); err != nil {
+	if err = Snapshot(ctx, db, path); err != nil {
 		return "", err
 	}
 	return path, nil
+}
+
+// Snapshot creates and verifies a consistent SQLite copy. The destination must
+// be a new path in a caller-owned private directory, never a live database path.
+func Snapshot(ctx context.Context, db *sql.DB, path string) error {
+	if _, err := db.ExecContext(ctx, "VACUUM INTO ?", path); err != nil {
+		return fmt.Errorf("create SQLite snapshot: %w", err)
+	}
+	if err := os.Chmod(path, 0o600); err != nil {
+		return fmt.Errorf("secure backup: %w", err)
+	}
+	return verifyBackup(ctx, path)
 }
 
 func verifyBackup(ctx context.Context, path string) error {

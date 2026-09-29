@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Levipanic/stereoblog-v2/backend/internal/content"
+	"github.com/Levipanic/stereoblog-v2/backend/internal/media"
 )
 
 type AuditReport struct {
@@ -156,15 +157,21 @@ func parsePreviewMedia(raw string) (string, error) {
 
 func missingUploads(uploadsPath string, references []string) []string {
 	missing := make(map[string]struct{})
+	root, rootErr := os.OpenRoot(uploadsPath)
+	if rootErr == nil {
+		defer root.Close()
+	}
 	for _, reference := range references {
 		decoded, err := url.PathUnescape(strings.TrimPrefix(reference, "/uploads/"))
-		if err != nil {
+		if err != nil || rootErr != nil {
 			missing[reference] = struct{}{}
 			continue
 		}
-		info, err := os.Stat(filepath.Join(uploadsPath, filepath.FromSlash(decoded)))
-		if err != nil || !info.Mode().IsRegular() {
+		file, err := media.OpenRegular(root, decoded)
+		if err != nil {
 			missing[reference] = struct{}{}
+		} else {
+			file.Close()
 		}
 	}
 	result := make([]string, 0, len(missing))

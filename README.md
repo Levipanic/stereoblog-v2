@@ -60,5 +60,13 @@ make audit AUDIT_ARGS='-db /absolute/path/to/blog.db -uploads /absolute/path/to/
 ```
 
 The command exits non-zero for integrity, schema, relationship, content, or
-missing-media failures. Posts, comments, authentication, and other product APIs
-are still separate backlog tasks.
+missing/unsafe-media failures.
+
+## Backend API status
+
+The Go API implements public posts/feed, post/comment likes, anonymous comments
+and antispam, admin sessions/CSRF, post CRUD, uploads, moderation, and full backups.
+See [`doc/docs/BACKEND_API.md`](doc/docs/BACKEND_API.md) for endpoint contracts and
+[`doc/docs/DEPLOYMENT.md`](doc/docs/DEPLOYMENT.md#admin-portable-backup) for restore steps.
+Backend Phase 2 is implemented and awaiting the owner's phase-gate review;
+the Nuxt product UI and deployment/release phases remain in the backlog.

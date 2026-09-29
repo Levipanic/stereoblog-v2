@@ -847,7 +847,9 @@ Port the useful moderation controls from v1.
 
 ---
 
-## [ ] V2-212 — Portable full backup service/API
+## [-] V2-212 — Portable full backup service/API
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-208, V2-102, V2-210
 

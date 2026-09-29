@@ -54,7 +54,7 @@ func run(logger *slog.Logger) error {
 		Addr:              cfg.ListenAddress(),
 		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
-		// ponytail: global 30s limits suit current small requests; use route-aware deadlines if large uploads or backups need longer.
+		// Ordinary API requests stay bounded; the backup handler extends its write deadline.
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,

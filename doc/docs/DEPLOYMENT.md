@@ -135,6 +135,47 @@ Two levels:
 
 Owner clicks Download Backup and gets DB + uploads + manifest.
 
+The backend endpoint is `POST /api/v1/admin/backup`, authenticated by the admin
+session cookie and `X-CSRF-Token`. The admin button is a later frontend task; it
+can already be exercised using an authenticated HTTP client. Save the response
+as a ZIP only after checking for HTTP 200 (errors use the normal JSON envelope).
+
+Generation requires temporary disk space for one SQLite snapshot plus the ZIP.
+Set the service's `TMPDIR` to a private writable location with sufficient space
+if the default temporary filesystem is too small. Backups are streamed from disk,
+not assembled in RAM. Proxy timeouts must allow the download (backend deadline:
+15 minutes). Only one backup/download runs at a time, with at most one start per minute.
+Store the downloaded archive off the VPS.
+
+#### Restore into a disposable instance
+
+1. Extract your own trusted archive into a **new empty directory**, never over the live site.
+   It contains `manifest.json`, `data/blog.db`, and `uploads/` (possibly absent for an empty site).
+2. Check the manifest counts and compare `sha256sum data/blog.db` to `database_sha256`.
+   ZIP extraction must finish without CRC errors.
+3. Run the read-only audit from the repository root:
+
+   ```sh
+   make audit AUDIT_ARGS='-db /absolute/restore/data/blog.db -uploads /absolute/restore/uploads'
+   ```
+
+4. Supply fresh runtime configuration separately; `.env` and the admin secret are not archived.
+   Start the API on a spare local port:
+
+   ```sh
+   ENV_FILE=/dev/null APP_ENV=development API_PORT=8081 \
+     DB_PATH=/absolute/restore/data/blog.db \
+     UPLOADS_PATH=/absolute/restore/uploads make dev-backend
+   ```
+
+5. Check health, feed, representative post/comment/media endpoints, and admin login.
+   Compare row counts with the manifest. The frontend browsing rehearsal comes with
+   the later UI/release tasks. Keep the untouched archive until the restore is accepted.
+
+Changing `ADMIN_SESSION_HASH_SALT` (which defaults to the new admin secret) makes
+archived sessions unusable, so the restored owner logs in again. Production must
+use a new non-default secret, explicit persistent paths and HTTPS.
+
 ### Server/operator backup
 
 Continue supporting simple filesystem/server backup workflows for disaster recovery.
