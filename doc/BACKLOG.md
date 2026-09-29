@@ -742,7 +742,9 @@ Establish secure single-owner admin auth before any v2 write endpoints.
 
 ---
 
-## [ ] V2-209 — Admin post CRUD using canonical block validation
+## [-] V2-209 — Admin post CRUD using canonical block validation
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-208, V2-105, V2-202
 

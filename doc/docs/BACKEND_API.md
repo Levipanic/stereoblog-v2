@@ -22,3 +22,19 @@ CSRF header and non-cross-site origin signals; login also rejects cross-site req
 Login accepts only bounded JSON and has the v1 15-minute per-IP rate window.
 Existing `ADMIN_*` environment settings configure secret, lifetime, salts and limits.
 Production configuration refuses the default secret. No schema migration is needed.
+
+## Admin posts
+
+- `GET /admin/posts?limit=10&cursor=...`: existing cursor feed contract.
+- `GET /admin/posts/:id`: editable stored blocks and explicit `preview_media` (null means automatic).
+- `POST /admin/posts`: JSON `{ "title", "blocks", "slug"?, "preview_media"? }`, returns 201 with saved post.
+- `PUT /admin/posts/:id`: title and blocks required. Omitted preview preserves its previous value;
+  explicit null resets it to automatic selection. Returns saved post.
+- `DELETE /admin/posts/:id`: deletes post and cascaded comments/like events, retaining upload files.
+
+Canonical validation regenerates plain fallback text. Unknown legacy blocks are returned only to
+authenticated editing clients, and saves reject unsupported blocks instead of silently dropping them.
+Title limit is 160 UTF-16 characters, matching v1. Slugs may be selected at creation;
+automatic collisions receive numeric suffixes, explicit collisions return 409 `slug_conflict`.
+Published slugs are immutable (409 `slug_immutable`); changing titles preserves links.
+Creation uses existing `ADMIN_POST_RATE_LIMIT_*` settings. All writes require session + CSRF.
