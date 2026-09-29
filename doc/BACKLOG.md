@@ -702,7 +702,9 @@ Port anonymous comment likes with v1-style protections.
 
 ---
 
-## [ ] V2-208 — Admin authentication/session/CSRF
+## [-] V2-208 — Admin authentication/session/CSRF
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-103, V2-003
 
