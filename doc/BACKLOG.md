@@ -776,7 +776,9 @@ Provide create/edit/delete endpoints for one author, including slug behavior.
 
 ---
 
-## [ ] V2-210 — Local filesystem upload API
+## [-] V2-210 — Local filesystem upload API
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-208
 

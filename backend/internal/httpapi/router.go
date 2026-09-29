@@ -57,6 +57,8 @@ func NewRouter(cfg config.Config, logger *slog.Logger, db *sql.DB) (*gin.Engine,
 	router.GET("/api/v1/posts/:post/comments/challenge", commentChallengeHandler(antispamService, postRepository, commentLimiter, logger))
 	router.POST("/api/v1/posts/:post/comments", commentCreateHandler(antispamService, commentRepository, commentLimiter, cfg, logger))
 	registerAdmin(router, db, cfg, logger)
+	router.GET("/uploads/*file", serveUpload(cfg.Storage.UploadsPath))
+	router.HEAD("/uploads/*file", serveUpload(cfg.Storage.UploadsPath))
 	router.NoRoute(func(c *gin.Context) {
 		writeError(c, http.StatusNotFound, "not_found", "Resource not found.")
 	})

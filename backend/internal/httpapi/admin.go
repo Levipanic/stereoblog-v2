@@ -66,6 +66,7 @@ func registerAdmin(router *gin.Engine, db *sql.DB, cfg config.Config, logger *sl
 	protected := g.Group("")
 	protected.Use(a.authorize())
 	a.postRoutes(protected, posts.NewRepository(db))
+	protected.POST("/uploads", a.upload)
 	protected.POST("/logout", func(c *gin.Context) {
 		session := c.MustGet("adminSession").(admin.Session)
 		if a.failed(c, a.sessions.Delete(c.Request.Context(), session.Hash)) {

@@ -38,3 +38,21 @@ Title limit is 160 UTF-16 characters, matching v1. Slugs may be selected at crea
 automatic collisions receive numeric suffixes, explicit collisions return 409 `slug_conflict`.
 Published slugs are immutable (409 `slug_immutable`); changing titles preserves links.
 Creation uses existing `ADMIN_POST_RATE_LIMIT_*` settings. All writes require session + CSRF.
+
+## Uploads
+
+`POST /admin/uploads` accepts exactly one multipart `file`, with session + CSRF.
+Returns 201 `{ "url", "original_name", "stored_name", "media_kind", "width"?, "height"? }`.
+`UPLOAD_MAX_SIZE` bounds file size; multipart overhead is also bounded. Files stream to a hidden
+temporary file, are inspected server-side, then atomically renamed to a random immutable filename.
+Failures remove partial files. PNG/JPEG/GIF include dimensions; WebP/video/audio types are identified
+using the already-installed MIME detector, not the browser's Content-Type. Known media extensions
+must match detected contents. Other files are download-only attachments. Empty files and path-like
+names are rejected. No image re-encoding or media optimization is performed.
+
+New SVG and detected HTML uploads are rejected. Historical SVG remains available with
+`Content-Security-Policy: sandbox; default-src 'none'; style-src 'unsafe-inline'`, which disables scripts
+and external resources without modifying stored files. This may prevent external references in old SVGs.
+`GET/HEAD /uploads/*` serves media with nosniff, range support and no directory listing.
+Generic files are attachments; hidden paths and symlinks are rejected. Route `/uploads/*` to Go in
+production to retain these protections (a future proxy implementation must reproduce the policy).
