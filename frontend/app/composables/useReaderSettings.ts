@@ -30,6 +30,11 @@ export function useReaderSettings() {
     save(readerKeys.theme, value)
   }
 
+  function setFeedView(value: FeedView) {
+    feedView.value = value
+    save(readerKeys.feedView, value)
+  }
+
   function restore() {
     if (!import.meta.client) return
     const systemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -52,5 +57,5 @@ export function useReaderSettings() {
     return messages[language.value][key].replace(/\{(\w+)\}/g, (match, name: string) => String(values[name] ?? match))
   }
 
-  return { language, theme, feedView, setLanguage, setTheme, restore, t }
+  return { language, theme, feedView, setLanguage, setTheme, setFeedView, restore, t }
 }

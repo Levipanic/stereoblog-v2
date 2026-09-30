@@ -197,6 +197,13 @@ h1, h2, h3, p { margin-block: 0; }
 
 .feed-list { margin: 0; padding: 0; list-style: none; }
 .feed-list > li + li { border-top: 1px solid var(--border); }
+@media (min-width: 760px) {
+  .feed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .feed-grid > li { min-width: 0; }
+  .feed-grid > li:nth-child(2) { border-top: 0; }
+  .feed-grid > li:nth-child(even) { border-left: 1px solid var(--border); }
+  .feed-grid .post-title { font-size: 1.2rem; }
+}
 .feed-post { padding: 1.25rem; }
 .post-meta { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; color: var(--text-muted); font-size: 0.8rem; }
 .post-title { margin-block: 0.4rem 0.6rem; font-size: 1.35rem; line-height: 1.4; }

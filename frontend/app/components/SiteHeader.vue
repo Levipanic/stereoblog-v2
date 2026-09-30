@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const config = useRuntimeConfig()
-const { t, language, theme, setLanguage, setTheme } = useReaderSettings()
+const { t, language, theme, feedView, setLanguage, setTheme, setFeedView } = useReaderSettings()
 const settings = useTemplateRef<HTMLDetailsElement>('settings')
 
 function closeSettings() {
@@ -33,6 +33,13 @@ function closeSettings() {
             <div class="setting-options">
               <button type="button" :aria-pressed="theme === 'light'" @click="setTheme('light')">{{ t('light') }}</button>
               <button type="button" :aria-pressed="theme === 'dark'" @click="setTheme('dark')">{{ t('dark') }}</button>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>{{ t('feedView') }}</legend>
+            <div class="setting-options">
+              <button type="button" :aria-pressed="feedView === 'list'" @click="setFeedView('list')">{{ t('feedList') }}</button>
+              <button type="button" :aria-pressed="feedView === 'grid'" @click="setFeedView('grid')">{{ t('feedGrid') }}</button>
             </div>
           </fieldset>
         </div>

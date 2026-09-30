@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const api = usePublicApi()
 const config = useRuntimeConfig()
-const { t } = useReaderSettings()
+const { t, feedView } = useReaderSettings()
 const { data: feed, error, status, refresh } = await useAsyncData('public-feed', (_app, { signal }) => api.feed({ limit: 10 }, { signal }))
 
 if (import.meta.server && error.value) {
@@ -27,7 +27,7 @@ useHead(() => ({ title: `${config.public.siteName} — ${t('posts')}` }))
         <p>{{ t('feedError') }}</p>
         <button type="button" @click="refresh()">{{ t('retry') }}</button>
       </div>
-      <ol v-else-if="feed?.items.length" class="feed-list">
+      <ol v-else-if="feed?.items.length" class="feed-list" :class="{ 'feed-grid': feedView === 'grid' }">
         <li v-for="(post, index) in feed.items" :key="post.id">
           <FeedPost :post="post" :first="index === 0" />
         </li>

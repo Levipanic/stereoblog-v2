@@ -1011,7 +1011,9 @@ Render the first feed page as immediate, content-rich SSR HTML.
 
 ---
 
-## [ ] V2-304 — Grid feed mode parity
+## [-] V2-304 — Grid feed mode parity
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-303
 
