@@ -1,7 +1,7 @@
 import type { FeedPage, FeedItem, MediaKind } from '../../app/types/api.ts'
 
 const kinds: MediaKind[] = ['image', 'audio', 'video', 'file', 'gif']
-export const feedItems: FeedItem[] = Array.from({ length: 12 }, (_, index) => ({
+export const feedItems: FeedItem[] = Array.from({ length: 32 }, (_, index) => ({
   id: index + 1,
   slug: index === 0 ? 'привет-старый-веб' : `fixture-${index + 1}`,
   title: index === 0 ? 'Привет, старый веб' : `A long read about the personal web — ${index + 1}`,

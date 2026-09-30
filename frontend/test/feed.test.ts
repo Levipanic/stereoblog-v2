@@ -1,6 +1,17 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { localMediaSource, postDate, postPath, previewText } from '../app/utils/feed.ts'
+import { appendFeedPage, localMediaSource, postDate, postPath, previewText } from '../app/utils/feed.ts'
+import { feedItems } from './fixtures/feed.ts'
+
+test('appending cursor pages deduplicates across and within batches without replacing existing cards', () => {
+  const first = { items: feedItems.slice(0, 10), next_cursor: 'next' }
+  const next = { items: [feedItems[0]!, feedItems[10]!, feedItems[10]!, feedItems[11]!], next_cursor: null }
+  const result = appendFeedPage(first, next)
+  assert.deepEqual(result.items.map(item => item.id), Array.from({ length: 12 }, (_, i) => i + 1))
+  assert.equal(result.items[0], first.items[0])
+  assert.equal(first.items.length, 10)
+  assert.equal(result.next_cursor, null)
+})
 
 test('feed formatting is deterministic across SSR/client and safely encodes links', () => {
   assert.equal(postPath('Привет /?#'), `/posts/${encodeURIComponent('Привет /?#')}`)

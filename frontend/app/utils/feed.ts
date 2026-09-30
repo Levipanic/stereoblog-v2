@@ -1,4 +1,15 @@
 import type { Language } from './reader-settings.ts'
+import type { FeedPage } from '../types/api.ts'
+
+export function appendFeedPage(current: FeedPage, next: FeedPage): FeedPage {
+  const ids = new Set(current.items.map(item => item.id))
+  const added = next.items.filter(item => {
+    if (ids.has(item.id)) return false
+    ids.add(item.id)
+    return true
+  })
+  return { items: [...current.items, ...added], next_cursor: next.next_cursor }
+}
 
 export function postPath(slug: string) {
   return `/posts/${encodeURIComponent(slug)}`

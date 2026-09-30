@@ -1036,7 +1036,9 @@ Preserve v1 grid mode with v2 media/responsive polish.
 
 ---
 
-## [ ] V2-305 — Infinite scroll with cursor loading
+## [-] V2-305 — Infinite scroll with cursor loading
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-303
 
