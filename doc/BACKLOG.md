@@ -900,7 +900,9 @@ Backend parity can be exercised through API tests against migrated v1 fixture/pr
 
 Goal: replace the public MPA with SSR Nuxt while preserving StereoDamage identity and making feed navigation genuinely better.
 
-## [ ] V2-301 — Typed frontend API client and shared public data types
+## [-] V2-301 — Typed frontend API client and shared public data types
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-201, V2-202, V2-204
 
