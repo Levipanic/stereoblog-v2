@@ -22,7 +22,8 @@ export default defineNuxtConfig({
   },
   nitro: {
     devProxy: {
-      [runtimeConfig.apiBase]: { target: runtimeConfig.internalApiBase.replace(/\/+$/, ''), changeOrigin: true },
+      [runtimeConfig.apiBase]: { target: runtimeConfig.internalApiBase.replace(/\/+$/, ''), changeOrigin: false },
+      '/uploads': { target: new URL('/uploads', runtimeConfig.internalApiBase).href, changeOrigin: false },
     },
   },
   routeRules: {

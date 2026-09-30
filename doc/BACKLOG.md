@@ -973,7 +973,11 @@ Owner must approve overall vibe before many pages are built.
 
 ---
 
-## [ ] V2-303 — SSR feed/list view
+## [-] V2-303 — SSR feed/list view
+
+Implemented and checked with production SSR and desktop/mobile browser tests; awaiting owner acceptance.
+Article/discussion links use their canonical URLs; destination pages arrive in V2-401/V2-406.
+Replace the temporary native article links with NuxtLink in V2-401.
 
 **Depends on:** V2-301, V2-302
 

@@ -2,10 +2,11 @@
 const api = usePublicApi()
 const config = useRuntimeConfig()
 const { t } = useReaderSettings()
-const { data: health, error } = await useAsyncData('api-health', (_app, { signal }) => api.health({ signal }))
+const { data: feed, error, status, refresh } = await useAsyncData('public-feed', (_app, { signal }) => api.feed({ limit: 10 }, { signal }))
 
-if (error.value) {
-  throw createError({ statusCode: 502, statusMessage: 'API unavailable' })
+if (import.meta.server && error.value) {
+  const event = useRequestEvent()
+  if (event) setResponseStatus(event, 502)
 }
 
 useHead(() => ({ title: `${config.public.siteName} — ${t('posts')}` }))
@@ -21,8 +22,17 @@ useHead(() => ({ title: `${config.public.siteName} — ${t('posts')}` }))
         </div>
         <span class="site-handle">{{ config.public.siteHandle }}</span>
       </header>
-      <p class="feed-status">{{ t('preparingFeed') }}</p>
-      <p class="system-status">v2 / {{ health?.status }}</p>
+      <p v-if="status === 'pending'" class="feed-status" role="status">{{ t('loadingFeed') }}</p>
+      <div v-else-if="error" class="feed-status feed-error" role="alert">
+        <p>{{ t('feedError') }}</p>
+        <button type="button" @click="refresh()">{{ t('retry') }}</button>
+      </div>
+      <ol v-else-if="feed?.items.length" class="feed-list">
+        <li v-for="(post, index) in feed.items" :key="post.id">
+          <FeedPost :post="post" :first="index === 0" />
+        </li>
+      </ol>
+      <p v-else class="feed-status" role="status">{{ t('emptyFeed') }}</p>
     </section>
   </main>
 </template>

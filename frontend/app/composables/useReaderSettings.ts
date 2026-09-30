@@ -48,5 +48,9 @@ export function useReaderSettings() {
     return () => query.removeEventListener('change', update)
   }
 
-  return { language, theme, feedView, setLanguage, setTheme, restore, t: (key: MessageKey) => messages[language.value][key] }
+  function t(key: MessageKey, values: Record<string, string | number> = {}) {
+    return messages[language.value][key].replace(/\{(\w+)\}/g, (match, name: string) => String(values[name] ?? match))
+  }
+
+  return { language, theme, feedView, setLanguage, setTheme, restore, t }
 }

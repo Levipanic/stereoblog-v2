@@ -53,6 +53,7 @@ failed child command. For browser checks, install Chromium once with
 The tests build and start disposable Go/Nuxt instances on ports 4010–4012, using
 temporary SQLite/uploads rather than your local data. Screenshots/traces are in
 `frontend/test-results/`. `npm --prefix frontend run test:ssr` checks production SSR.
+Use `NUXT_E2E_DEV=1 make e2e` to exercise Nuxt's development API/media proxy as well.
 On minimal Linux installations Chromium may also need system libraries:
 `npm --prefix frontend exec -- playwright install-deps chromium` (requires administrator access).
 
@@ -74,4 +75,12 @@ and antispam, admin sessions/CSRF, post CRUD, uploads, moderation, and full back
 See [`doc/docs/BACKEND_API.md`](doc/docs/BACKEND_API.md) for endpoint contracts and
 [`doc/docs/DEPLOYMENT.md`](doc/docs/DEPLOYMENT.md#admin-portable-backup) for restore steps.
 Backend Phase 2 is implemented and awaiting the owner's phase-gate review;
-the Nuxt product UI and deployment/release phases remain in the backlog.
+the remaining Nuxt UI and deployment/release work is tracked in the backlog.
+
+## Public frontend status
+
+The homepage renders the first feed page through SSR, including text/media previews,
+reading time, likes and comment teasers from one API response. RU/EN and light/dark
+settings reuse v1 preferences; the saved grid preference is retained for V2-304.
+Article and discussion URLs are prepared for V2-401/V2-406; their pages are not implemented yet.
+Next feed tasks are grid mode (V2-304), infinite loading (V2-305), and Back/scroll restoration (V2-306).

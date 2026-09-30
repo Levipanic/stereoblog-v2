@@ -1,16 +1,19 @@
 // Disposable real Go + production Nuxt instance behind a same-origin test proxy.
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
-import { mkdtempSync, mkdirSync, rmSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer, request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
+import { DatabaseSync } from 'node:sqlite'
+import { feedItems, fixtureImage } from '../fixtures/feed.ts'
 
 const directory = mkdtempSync(join(tmpdir(), 'stereodamage-browser-'))
 const children: ChildProcess[] = []
+const development = process.env.NUXT_E2E_DEV === '1'
 const proxy = createServer((req, res) => {
-  const port = req.url?.startsWith('/api/') || req.url?.startsWith('/uploads/') ? 4011 : 4012
+  const port = !development && (req.url?.startsWith('/api/') || req.url?.startsWith('/uploads/')) ? 4011 : 4012
   const upstream = request({ hostname: '127.0.0.1', port, path: req.url, method: req.method, headers: req.headers }, (response) => {
     res.writeHead(response.statusCode ?? 502, response.headers)
     response.pipe(res)
@@ -50,7 +53,17 @@ try {
     stdio: 'inherit',
   }))
   await ready('http://127.0.0.1:4011/api/v1/health')
-  children.push(spawn(process.execPath, ['.output/server/index.mjs'], {
+  const db = new DatabaseSync(join(directory, 'blog.db'))
+  const insertPost = db.prepare('INSERT INTO posts (id, slug, title, blocks_json, preview_media, likes_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+  const insertComment = db.prepare('INSERT INTO comments (id, post_id, parent_id, name, content, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+  for (const post of feedItems) {
+    insertPost.run(post.id, post.slug, post.title, JSON.stringify([{ type: 'paragraph', text: post.preview_text }]), post.preview_media ? JSON.stringify(post.preview_media) : null, post.likes, post.created_at)
+    for (const comment of post.comment_previews) insertComment.run(comment.id, post.id, comment.parent_id, comment.name, comment.content, comment.created_at)
+  }
+  db.close()
+  writeFileSync(join(directory, 'uploads', 'fixture.svg'), fixtureImage)
+  const webCommand = development ? ['node_modules/nuxt/bin/nuxt.mjs', 'dev', '--host', '127.0.0.1', '--port', '4012'] : ['.output/server/index.mjs']
+  children.push(spawn(process.execPath, webCommand, {
     env: { ...process.env, HOST: '127.0.0.1', PORT: '4012', NUXT_INTERNAL_API_BASE: 'http://127.0.0.1:4011/api/v1', NUXT_PUBLIC_API_BASE: '/api/v1' },
     stdio: 'inherit',
   }))
