@@ -932,7 +932,9 @@ Create a small typed boundary between Nuxt and Gin.
 
 ---
 
-## [ ] V2-302 — Global visual foundation and v1 settings compatibility
+## [-] V2-302 — Global visual foundation and v1 settings compatibility
+
+Implemented and checked on desktop/mobile viewports; awaiting owner visual acceptance.
 
 **Depends on:** V2-004
 

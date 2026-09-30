@@ -47,8 +47,8 @@ build-backend:
 build-frontend: check-frontend-tools
 	npm --prefix frontend run build
 
-e2e:
-	@printf '%s\n' 'E2E is not implemented yet; no browser test runner has been added.' >&2; exit 2
+e2e: check-frontend-tools
+	npm --prefix frontend run test:browser
 
 audit:
 	$(LOAD_ENV) cd backend && go run ./cmd/audit $(AUDIT_ARGS)

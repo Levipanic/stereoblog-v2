@@ -48,8 +48,13 @@ make build
 ```
 
 These commands run without `.env` or production secrets and stop on the first
-failed child command. `make e2e` is a reserved hook that fails until its backlog
-task provides a real implementation.
+failed child command. For browser checks, install Chromium once with
+`npm --prefix frontend exec -- playwright install chromium`, then run `make e2e`.
+The tests build and start disposable Go/Nuxt instances on ports 4010–4012, using
+temporary SQLite/uploads rather than your local data. Screenshots/traces are in
+`frontend/test-results/`. `npm --prefix frontend run test:ssr` checks production SSR.
+On minimal Linux installations Chromium may also need system libraries:
+`npm --prefix frontend exec -- playwright install-deps chromium` (requires administrator access).
 
 The backend opens and migrates the configured SQLite database on startup. Never
 point development commands at the only production copy. To audit an already

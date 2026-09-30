@@ -1,4 +1,5 @@
 import { validateRuntimeConfig } from './config/validate'
+import { themeBootstrap } from './app/utils/reader-settings'
 
 const publicApiBase = process.env.NUXT_PUBLIC_API_BASE || '/api/v1'
 const runtimeConfig = {
@@ -14,6 +15,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-09-08',
   devtools: { enabled: false },
   css: ['~/assets/css/main.css'],
+  app: {
+    head: {
+      script: [{ key: 'reader-theme', innerHTML: themeBootstrap, tagPriority: 'critical' }],
+    },
+  },
   nitro: {
     devProxy: {
       [runtimeConfig.apiBase]: { target: runtimeConfig.internalApiBase.replace(/\/+$/, ''), changeOrigin: true },

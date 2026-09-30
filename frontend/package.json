@@ -13,6 +13,7 @@
     "typecheck": "nuxt typecheck",
     "test": "node --test test/*.test.ts",
     "test:ssr": "npm run build && node --test test/integration/*.test.ts",
+    "test:browser": "npm run build && playwright test",
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
@@ -21,6 +22,7 @@
     "vue-router": "5.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/node": "24.13.3",
     "typescript": "5.9.3",
     "vue-tsc": "3.3.11"
