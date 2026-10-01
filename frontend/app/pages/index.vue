@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { appendFeedPage } from '~/utils/feed'
 
+// Keep only this page alive: its loaded cards/cursor survive same-session navigation.
+definePageMeta({ keepalive: true })
+
 const api = usePublicApi()
 const config = useRuntimeConfig()
 const { t, feedView } = useReaderSettings()
@@ -8,22 +11,26 @@ const { data: feed, error, status, refresh } = await useAsyncData('public-feed',
 const loadingMore = ref(false)
 const moreFailed = ref(false)
 const loadedCursors = new Set<string>()
-const controller = new AbortController()
+let controller = new AbortController()
 onBeforeUnmount(() => controller.abort())
+onDeactivated(() => controller.abort())
+onActivated(() => { if (controller.signal.aborted) controller = new AbortController() })
 
 async function loadMore() {
   const cursor = feed.value?.next_cursor
   if (!cursor || loadingMore.value || controller.signal.aborted) return
   loadingMore.value = true
   moreFailed.value = false
+  const requestController = controller
   try {
-    const next = await api.feed({ limit: 10, cursor }, { signal: controller.signal })
+    const next = await api.feed({ limit: 10, cursor }, { signal: requestController.signal })
+    if (requestController.signal.aborted) return
     if (next.next_cursor === cursor || (next.next_cursor && loadedCursors.has(next.next_cursor))) throw new Error('Cursor did not advance')
     if (feed.value) feed.value = appendFeedPage(feed.value, next)
     loadedCursors.add(cursor)
   }
   catch {
-    if (!controller.signal.aborted) moreFailed.value = true
+    if (!requestController.signal.aborted) moreFailed.value = true
   }
   finally { loadingMore.value = false }
 }

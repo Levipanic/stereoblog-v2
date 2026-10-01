@@ -80,7 +80,13 @@ the remaining Nuxt UI and deployment/release work is tracked in the backlog.
 ## Public frontend status
 
 The homepage renders the first feed page through SSR, including text/media previews,
-reading time, likes and comment teasers from one API response. RU/EN and light/dark
-settings reuse v1 preferences; the saved grid preference is retained for V2-304.
-Article and discussion URLs are prepared for V2-401/V2-406; their pages are not implemented yet.
-Next feed tasks are grid mode (V2-304), infinite loading (V2-305), and Back/scroll restoration (V2-306).
+reading time, likes and comment teasers from one API response. RU/EN, light/dark and
+list/grid settings reuse v1 preferences. Grid is two columns on desktop and one on phones.
+Cursor loading uses IntersectionObserver plus a keyboard-accessible load-more fallback,
+explicit retry after errors, duplicate suppression and an end state.
+
+Nuxt keeps the feed alive during same-session navigation, preserving loaded cards,
+cursor and card state. Browser Back and the post's Back button use native router
+scroll restoration. Reload starts from fresh SSR data; feed HTML is never saved in localStorage.
+The minimal `/posts/:slug` page currently displays the title and Back button for this flow.
+Full article rendering and discussion are still V2-401/V2-406. Phase 3 awaits owner acceptance.

@@ -52,41 +52,40 @@ async function like() {
       <slot name="reading-status" />
     </div>
     <h2 :id="`post-title-${post.id}`" class="post-title">
-      <!-- ponytail: use NuxtLink when V2-401 adds the article route; native links avoid resolving a route that does not exist yet. -->
-      <a :href="path">{{ post.title }}</a>
+      <NuxtLink :to="path" :prefetch="false">{{ post.title }}</NuxtLink>
     </h2>
     <p v-if="post.preview_text" class="post-preview">{{ previewText(post.preview_text) }}</p>
 
     <figure v-if="post.preview_media && mediaSrc" class="feed-media">
-      <a v-if="post.preview_media.mediaKind === 'image' || post.preview_media.mediaKind === 'gif'" :href="path" class="feed-image-frame">
+      <NuxtLink v-if="post.preview_media.mediaKind === 'image' || post.preview_media.mediaKind === 'gif'" :to="path" :prefetch="false" class="feed-image-frame">
         <img
           v-if="!imageFailed" ref="previewImage" :src="mediaSrc" :alt="post.preview_media.alt || post.title"
           width="960" height="540" :loading="first ? 'eager' : 'lazy'" decoding="async"
           @error="imageFailed = true"
         >
         <span v-else class="media-fallback">{{ t('mediaUnavailable') }}</span>
-      </a>
-      <a v-else :href="path" class="feed-attachment">
+      </NuxtLink>
+      <NuxtLink v-else :to="path" :prefetch="false" class="feed-attachment">
         <span>{{ t(post.preview_media.mediaKind) }}</span>
         <span v-if="post.preview_media.name" class="attachment-name">{{ post.preview_media.name }}</span>
-      </a>
+      </NuxtLink>
       <figcaption v-if="post.preview_media.caption">{{ post.preview_media.caption }}</figcaption>
     </figure>
 
     <div class="post-actions">
-      <a class="read-post" :href="path">{{ t('openPost') }} <span aria-hidden="true">→</span></a>
+      <NuxtLink class="read-post" :to="path" :prefetch="false">{{ t('openPost') }} <span aria-hidden="true">→</span></NuxtLink>
       <button type="button" :disabled="pending || !hydrated" :aria-label="t('likePost', { title: post.title })" :aria-busy="pending" @click="like">
         <span aria-hidden="true">♡</span> {{ t('like') }} · <span class="like-count">{{ likes }}</span>
       </button>
-      <a class="comment-count" :href="`${path}#comments`">{{ t('comments', { count: post.comment_count }) }}</a>
+      <NuxtLink class="comment-count" :to="`${path}#comments`" :prefetch="false">{{ t('comments', { count: post.comment_count }) }}</NuxtLink>
     </div>
     <p v-if="feedback" class="like-feedback" role="status">{{ t(feedback) }}</p>
-    <a v-if="post.comment_previews.length" class="comment-preview-link" :href="`${path}#comments`" :aria-label="t('discussion', { title: post.title })">
+    <NuxtLink v-if="post.comment_previews.length" class="comment-preview-link" :to="`${path}#comments`" :prefetch="false" :aria-label="t('discussion', { title: post.title })">
       <ul class="comment-previews">
         <li v-for="comment in post.comment_previews.slice(0, 2)" :key="comment.id">
           <strong>{{ comment.name || t('anonymous') }}:</strong> {{ previewText(comment.content, 120) }}
         </li>
       </ul>
-    </a>
+    </NuxtLink>
   </article>
 </template>

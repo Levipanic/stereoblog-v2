@@ -4,20 +4,24 @@ const emit = defineEmits<{ load: [] }>()
 const { t } = useReaderSettings()
 const sentinel = useTemplateRef('sentinel')
 let observer: IntersectionObserver | undefined
+let active = false
 
 function observe() {
   observer?.disconnect()
-  if (sentinel.value && props.cursor && !props.loading && !props.failed) observer?.observe(sentinel.value)
+  if (active && sentinel.value && props.cursor && !props.loading && !props.failed) observer?.observe(sentinel.value)
 }
 
 onMounted(() => {
+  active = true
   if (typeof IntersectionObserver === 'undefined') return
   observer = new IntersectionObserver((entries) => {
-    if (entries.some(entry => entry.isIntersecting) && props.cursor && !props.loading && !props.failed) emit('load')
+    if (active && entries.some(entry => entry.isIntersecting) && props.cursor && !props.loading && !props.failed) emit('load')
   }, { rootMargin: '200px' })
   observe()
 })
 watch(() => [props.cursor, props.loading, props.failed], observe, { flush: 'post' })
+onActivated(() => { active = true; observe() })
+onDeactivated(() => { active = false; observer?.disconnect() })
 onBeforeUnmount(() => observer?.disconnect())
 </script>
 
