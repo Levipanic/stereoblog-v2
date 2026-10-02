@@ -13,6 +13,7 @@ const moreFailed = ref(false)
 const loadedCursors = new Set<string>()
 let controller = new AbortController()
 onBeforeUnmount(() => controller.abort())
+onBeforeRouteLeave(() => { controller.abort() })
 onDeactivated(() => controller.abort())
 onActivated(() => { if (controller.signal.aborted) controller = new AbortController() })
 

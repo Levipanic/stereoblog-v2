@@ -8,6 +8,7 @@ import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
 import { feedItems, fixtureImage } from '../fixtures/feed.ts'
+import { articleBlocks } from '../fixtures/article.ts'
 
 const directory = mkdtempSync(join(tmpdir(), 'stereodamage-browser-'))
 const children: ChildProcess[] = []
@@ -57,11 +58,19 @@ try {
   const insertPost = db.prepare('INSERT INTO posts (id, slug, title, blocks_json, preview_media, likes_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
   const insertComment = db.prepare('INSERT INTO comments (id, post_id, parent_id, name, content, created_at) VALUES (?, ?, ?, ?, ?, ?)')
   for (const post of feedItems) {
-    insertPost.run(post.id, post.slug, post.title, JSON.stringify([{ type: 'paragraph', text: post.preview_text }]), post.preview_media ? JSON.stringify(post.preview_media) : null, post.likes, post.created_at)
+    const blocks = post.id === 1 ? [{ type: 'paragraph', text: post.preview_text }, ...articleBlocks] : [{ type: 'paragraph', text: post.preview_text }]
+    insertPost.run(post.id, post.slug, post.title, JSON.stringify(blocks), post.preview_media ? JSON.stringify(post.preview_media) : null, post.likes, post.created_at)
     for (const comment of post.comment_previews) insertComment.run(comment.id, post.id, comment.parent_id, comment.name, comment.content, comment.created_at)
   }
   db.close()
   writeFileSync(join(directory, 'uploads', 'fixture.svg'), fixtureImage)
+  writeFileSync(join(directory, 'uploads', 'fixture.txt'), 'Fixture attachment')
+  const wav = Buffer.alloc(44 + 16000 * 2 * 20)
+  wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8)
+  wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22)
+  wav.writeUInt32LE(16000, 24); wav.writeUInt32LE(32000, 28); wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34)
+  wav.write('data', 36); wav.writeUInt32LE(wav.length - 44, 40)
+  writeFileSync(join(directory, 'uploads', 'fixture.wav'), wav)
   const webCommand = development ? ['node_modules/nuxt/bin/nuxt.mjs', 'dev', '--host', '127.0.0.1', '--port', '4012'] : ['.output/server/index.mjs']
   children.push(spawn(process.execPath, webCommand, {
     env: { ...process.env, HOST: '127.0.0.1', PORT: '4012', NUXT_INTERNAL_API_BASE: 'http://127.0.0.1:4011/api/v1', NUXT_PUBLIC_API_BASE: '/api/v1' },

@@ -1109,7 +1109,9 @@ Owner browses the v2 timeline on phone/desktop for several pages and confirms it
 
 Goal: make opening and reading a shared post the strongest public experience.
 
-## [ ] V2-401 — Canonical `/posts/:slug` SSR article route
+## [-] V2-401 — Canonical `/posts/:slug` SSR article route
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-202, V2-301, V2-302
 
