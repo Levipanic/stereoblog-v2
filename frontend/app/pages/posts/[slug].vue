@@ -9,6 +9,7 @@ const api = usePublicApi()
 const config = useRuntimeConfig()
 const { t, language } = useReaderSettings()
 const slug = String(route.params.slug)
+const article = useTemplateRef<HTMLElement>('article')
 const { data: post, error } = await useAsyncData(`post:${slug}`, async (_app, { signal }) => {
   try { return await api.post(slug, { signal }) }
   catch (error) {
@@ -32,11 +33,12 @@ useHead(() => ({ title: `${post.value?.title ?? t('posts')} — ${config.public.
 <template>
   <main id="main-content" class="site-shell" tabindex="-1">
     <button type="button" class="back-to-feed" @click="back">{{ t('backToFeed') }}</button>
-    <article v-if="post" class="post-article">
+    <article v-if="post" ref="article" class="post-article">
       <header class="article-header">
         <h1>{{ post.title }}</h1>
         <div class="post-meta"><time :datetime="post.created_at">{{ postDate(post.created_at, language) }}</time><span>{{ t('readingTime', { minutes: post.reading_minutes }) }}</span></div>
       </header>
+      <ReadingProgress :post-id="post.id" :article="article" />
       <PostBody :blocks="post.blocks" />
       <p id="comments" class="feed-status">{{ t('discussionComingSoon') }}</p>
     </article>

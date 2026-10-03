@@ -9,7 +9,7 @@ const src = computed(() => localMediaSource(props.block.src))
 <template>
   <figure class="post-media">
     <template v-if="src">
-      <img v-if="block.mediaKind === 'image' || block.mediaKind === 'gif'" :src="src" :alt="block.alt || block.name || t('image')" loading="lazy" decoding="async">
+      <img v-if="block.mediaKind === 'image' || block.mediaKind === 'gif'" :src="src" :alt="block.alt || block.name || t('image')" width="960" height="540" loading="lazy" decoding="async">
       <video v-else-if="block.mediaKind === 'video'" :src="src" controls playsinline preload="none" :aria-label="block.name || t('video')" />
       <audio v-else-if="block.mediaKind === 'audio'" :src="src" controls preload="none" :aria-label="block.name || t('audio')" />
       <a v-else :href="src" :download="block.name || true">{{ block.name || t('file') }}</a>

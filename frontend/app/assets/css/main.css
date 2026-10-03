@@ -197,6 +197,9 @@ h1, h2, h3, p { margin-block: 0; }
 
 .feed-list { margin: 0; padding: 0; list-style: none; }
 .back-to-feed { margin-bottom: 1rem; }
+.reading-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30; pointer-events: none; }
+.reading-progress span { display: block; height: 100%; background: var(--focus-ring); }
+.continue-reading { max-width: 68ch; margin: 0 auto 1rem; }
 .post-article { background: var(--surface); padding: clamp(1rem, 4vw, 2.5rem); }
 .article-header, .post-body > :not(.media-block) { max-width: 68ch; margin-inline: auto; }
 .article-header h1 { font-size: clamp(1.6rem, 4vw, 2.25rem); line-height: 1.3; margin-bottom: 0.75rem; }
@@ -210,6 +213,7 @@ h1, h2, h3, p { margin-block: 0; }
 .post-body code { background: var(--surface-alt); padding: 0.1rem 0.25rem; overflow-wrap: anywhere; }
 .post-media { margin: 0; }
 .post-media img, .post-media video { width: 100%; max-height: 75vh; object-fit: contain; background: var(--surface-alt); }
+.post-media img { aspect-ratio: 16 / 9; }
 .post-media audio { width: 100%; }
 .post-media figcaption, .unsupported-block { font-size: 0.875rem; color: var(--text-muted); }
 .media-block > summary { cursor: pointer; padding: 0.6rem; border: 1px solid var(--border); }

@@ -1139,7 +1139,9 @@ Render migrated v1 long reads at canonical slug URLs with a true reading-oriente
 
 ---
 
-## [ ] V2-402 — Reader progress + continue-reading compatibility
+## [-] V2-402 — Reader progress + continue-reading compatibility
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-401, V2-303
 

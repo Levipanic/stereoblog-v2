@@ -7,6 +7,8 @@ import type { MessageKey } from '~/utils/i18n'
 const props = defineProps<{ post: FeedItem, first?: boolean }>()
 const { t, language } = useReaderSettings()
 const api = usePublicApi()
+const { entries, loaded } = useReadingProgress()
+const reading = computed(() => entries.value[props.post.id])
 const path = computed(() => postPath(props.post.slug))
 const mediaSrc = computed(() => props.post.preview_media && localMediaSource(props.post.preview_media.src))
 const imageFailed = ref(false)
@@ -49,7 +51,7 @@ async function like() {
     <div class="post-meta">
       <time :datetime="post.created_at">{{ postDate(post.created_at, language) }}</time>
       <span v-if="post.reading_minutes > 0">{{ t('readingTime', { minutes: post.reading_minutes }) }}</span>
-      <slot name="reading-status" />
+      <span v-if="loaded" class="reading-status">{{ t(reading?.completed ? 'readComplete' : reading ? 'readStarted' : 'readNew', { percent: Math.round((reading?.progress ?? 0) * 100) }) }}</span>
     </div>
     <h2 :id="`post-title-${post.id}`" class="post-title">
       <NuxtLink :to="path" :prefetch="false">{{ post.title }}</NuxtLink>
