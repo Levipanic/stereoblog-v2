@@ -1,0 +1,35 @@
+import { expect, test } from '@playwright/test'
+const url = '/posts/' + encodeURIComponent('привет-старый-веб')
+
+test('offscreen images stay lazy and the native viewer restores keyboard focus and scrolling', async ({ page }, testInfo) => {
+  const images: string[] = []
+  page.on('request', request => { if (request.url().includes('/uploads/')) images.push(request.url()) })
+  await page.goto(url)
+  await expect(page.locator('.post-image-frame img').first()).toHaveAttribute('loading', 'lazy')
+  expect(images).toEqual([])
+  const opener = page.getByRole('button', { name: 'Открыть изображение: Горы', exact: true })
+  await opener.scrollIntoViewIfNeeded()
+  await opener.click()
+  const dialog = page.getByRole('dialog', { name: 'Горы', exact: true })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.locator('img')).toHaveAttribute('alt', 'Горы')
+  expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('hidden')
+  expect(await dialog.evaluate(node => node.getBoundingClientRect().width <= innerWidth)).toBe(true)
+  if (testInfo.project.name === 'mobile') await dialog.getByRole('button').click()
+  else await page.keyboard.press('Escape')
+  await expect(dialog).not.toBeVisible()
+  await expect(opener).toBeFocused()
+  expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('')
+  await opener.click()
+  await dialog.getByRole('button').click()
+  await expect(dialog).not.toBeVisible()
+})
+
+test('missing image becomes a stable text fallback', async ({ page }) => {
+  await page.route('**/uploads/fixture.svg', route => route.fulfill({ status: 404, body: '' }))
+  await page.goto(url)
+  await page.locator('.post-image-frame').first().scrollIntoViewIfNeeded()
+  await expect(page.locator('.image-failed').first()).toContainText('Превью недоступно')
+  const box = await page.locator('.post-image-frame').first().boundingBox()
+  expect(box!.height).toBeGreaterThan(100)
+})

@@ -1194,7 +1194,9 @@ Preserve/improve v1 TOC without adding chrome to short posts.
 
 ---
 
-## [ ] V2-404 — Image/media responsiveness and lightweight image viewer
+## [-] V2-404 — Image/media responsiveness and lightweight image viewer
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-401
 
