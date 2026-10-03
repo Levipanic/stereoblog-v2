@@ -1167,7 +1167,9 @@ Preserve v1 reader-state value with quieter UX.
 
 ---
 
-## [ ] V2-403 — Long-read TOC and heading anchors
+## [-] V2-403 — Long-read TOC and heading anchors
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-401
 

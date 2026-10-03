@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ApiError } from '~/utils/api'
 import { postDate } from '~/utils/feed'
+import { hasTableOfContents } from '~/utils/content'
 
 definePageMeta({ key: route => route.path })
 const route = useRoute()
@@ -39,7 +40,10 @@ useHead(() => ({ title: `${post.value?.title ?? t('posts')} — ${config.public.
         <div class="post-meta"><time :datetime="post.created_at">{{ postDate(post.created_at, language) }}</time><span>{{ t('readingTime', { minutes: post.reading_minutes }) }}</span></div>
       </header>
       <ReadingProgress :post-id="post.id" :article="article" />
-      <PostBody :blocks="post.blocks" />
+      <div class="article-layout" :class="{ 'with-toc': hasTableOfContents(post.blocks) }">
+        <PostToc v-if="hasTableOfContents(post.blocks)" :blocks="post.blocks" />
+        <PostBody :blocks="post.blocks" />
+      </div>
       <p id="comments" class="feed-status">{{ t('discussionComingSoon') }}</p>
     </article>
     <section v-else class="feed-status" role="alert"><h1>{{ t(error?.statusCode === 404 ? 'postNotFound' : 'postUnavailable') }}</h1></section>
