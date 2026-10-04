@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#1f1a30"/>
+  <rect width="1200" height="100" fill="#473a54"/>
+  <rect x="80" y="480" width="1040" height="2" fill="#9f8383"/>
+  <text x="80" y="340" fill="#f2edff" font-family="sans-serif" font-weight="700" font-size="100">StereoDamage</text>
+  <text x="84" y="424" fill="#c7bddf" font-family="sans-serif" font-size="36">@stereodamage</text>
+</svg>

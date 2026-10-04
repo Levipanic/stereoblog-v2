@@ -98,5 +98,11 @@ dialog. A single app-level audio element continues across Nuxt navigation; artic
 buttons control the same track. The native mini-player provides transport/seek, a volume
 control preserving the v1 key, and close/release. Optional waveform rendering is deferred.
 No audio is fetched before interaction and no autoplay is attempted after a hard reload.
-Public commenting, sharing metadata, legacy redirects and the final public polish remain
-V2-406–V2-410. Completed implementation tasks await owner acceptance.
+Public discussion supports anonymous/named comments, replies, likes and pending moderation.
+Discussion links keep their position through late layout changes until reader interaction.
+Sharing uses native Web Share or clipboard/manual fallback. Article canonical/Open Graph/
+Twitter metadata is server-rendered; set `NUXT_PUBLIC_SITE_URL` to the production origin.
+The fallback share image is the committed `frontend/public/og-default.png`; regenerate it
+from the SVG using `node frontend/scripts/generate-og.ts` with Playwright Chromium installed.
+Legacy redirects and the final public polish remain V2-409–V2-410.
+Completed implementation tasks await owner acceptance.

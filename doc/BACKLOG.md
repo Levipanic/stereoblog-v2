@@ -1323,7 +1323,9 @@ Reader can choose “read post” vs “join discussion” from feed.
 
 ---
 
-## [ ] V2-408 — Sharing UI + canonical SEO/Open Graph metadata
+## [-] V2-408 — Sharing UI + canonical SEO/Open Graph metadata
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-401
 

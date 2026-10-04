@@ -2,6 +2,7 @@
 import { ApiError } from '~/utils/api'
 import { postDate } from '~/utils/feed'
 import { hasTableOfContents } from '~/utils/content'
+import { postMetadata } from '~/utils/sharing'
 
 definePageMeta({ key: route => route.path })
 const route = useRoute()
@@ -28,7 +29,28 @@ function back() {
   else navigateTo('/')
 }
 
-useHead(() => ({ title: `${post.value?.title ?? t('posts')} — ${config.public.siteName}` }))
+const metadata = computed(() => post.value ? postMetadata(post.value, config.public.siteUrl, config.public.siteName) : null)
+useHead(() => ({
+  title: `${post.value?.title ?? t('postNotFound')} — ${config.public.siteName}`,
+  link: metadata.value ? [{ rel: 'canonical', href: metadata.value.url }] : [],
+  meta: metadata.value ? [
+    { name: 'description', content: metadata.value.description },
+    { name: 'author', content: config.public.siteHandle },
+    { property: 'og:type', content: 'article' },
+    { property: 'og:site_name', content: config.public.siteName },
+    { property: 'og:title', content: metadata.value.title },
+    { property: 'og:description', content: metadata.value.description },
+    { property: 'og:url', content: metadata.value.url },
+    { property: 'og:image', content: metadata.value.image },
+    { property: 'og:image:alt', content: metadata.value.imageAlt },
+    { property: 'article:published_time', content: post.value!.created_at },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: metadata.value.title },
+    { name: 'twitter:description', content: metadata.value.description },
+    { name: 'twitter:image', content: metadata.value.image },
+    { name: 'twitter:image:alt', content: metadata.value.imageAlt },
+  ] : [{ name: 'robots', content: 'noindex' }],
+}))
 </script>
 
 <template>
@@ -38,7 +60,10 @@ useHead(() => ({ title: `${post.value?.title ?? t('posts')} — ${config.public.
       <header class="article-header">
         <h1>{{ post.title }}</h1>
         <div class="post-meta"><time :datetime="post.created_at">{{ postDate(post.created_at, language) }}</time><span>{{ t('readingTime', { minutes: post.reading_minutes }) }}</span></div>
-        <NuxtLink :to="`${route.path}#comments`" :prefetch="false">{{ t('discussionTitle') }}</NuxtLink>
+        <div class="article-actions">
+          <NuxtLink :to="`${route.path}#comments`" :prefetch="false">{{ t('discussionTitle') }}</NuxtLink>
+          <SharePost v-if="metadata" :title="post.title" :url="metadata.url" />
+        </div>
       </header>
       <ReadingProgress :post-id="post.id" :article="article" />
       <div class="article-layout" :class="{ 'with-toc': hasTableOfContents(post.blocks) }">
