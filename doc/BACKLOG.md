@@ -1353,7 +1353,9 @@ Make “send this long read to someone” a polished first-class flow.
 
 ---
 
-## [ ] V2-409 — Legacy `/post.html?id=` redirect compatibility
+## [-] V2-409 — Legacy `/post.html?id=` redirect compatibility
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-202, V2-401
 

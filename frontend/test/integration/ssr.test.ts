@@ -10,6 +10,11 @@ test('production Nuxt SSR uses its internal API base and embeds initial data', a
   let calls = 0
   let mode: 'populated' | 'empty' | 'error' = 'populated'
   const api = createServer((req, res) => {
+    if (req.url === '/api/v1/posts/by-id/998') {
+      res.setHeader('Content-Type', 'application/json')
+      res.writeHead(503).end(JSON.stringify({ error: { code: 'internal_error', message: 'Private backend detail' } }))
+      return
+    }
     assert.equal(req.url, '/api/v1/posts?limit=10')
     calls++
     res.setHeader('Content-Type', 'application/json')
@@ -71,4 +76,8 @@ test('production Nuxt SSR uses its internal API base and embeds initial data', a
   const main = errorHTML.match(/<main\b[\s\S]*?<\/main>/)?.[0]
   assert(main)
   assert.doesNotMatch(main, /Private backend detail/)
+  const lookupFailure = await fetch(`http://127.0.0.1:${webAddress.port}/post.html?id=998`, { redirect: 'manual' })
+  assert.equal(lookupFailure.status, 502)
+  assert.equal(lookupFailure.headers.get('Location'), null)
+  assert.doesNotMatch(await lookupFailure.text(), /Private backend detail/)
 })

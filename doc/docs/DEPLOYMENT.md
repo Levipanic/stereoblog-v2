@@ -61,6 +61,15 @@ Nuxt SSR should use an internal backend base URL such as `http://127.0.0.1:<go-p
 
 Do not hardcode public domain names in application source.
 
+### Legacy post URLs
+
+Route `/post.html?id=<id>` to Nuxt/Nitro, not an old static `post.html` file.
+Nitro resolves the numeric ID through Go and redirects to `/posts/<slug>`:
+301 in production builds, 302 in Nuxt development mode. Additional query parameters
+are discarded. Missing/malformed IDs return 400, nonexistent posts return 404, and
+an unavailable backend returns 502; none redirects home. Browsers retain an original
+`#comments` fragment because the redirect Location deliberately omits a fragment.
+
 ## Suggested runtime paths
 
 Keep persistent state separate from build output conceptually:
