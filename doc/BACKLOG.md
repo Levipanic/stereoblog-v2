@@ -1299,7 +1299,9 @@ Make discussion easy without copying imageboard UI.
 
 ---
 
-## [ ] V2-407 — Feed comment-preview click -> reliable `#comments`
+## [-] V2-407 — Feed comment-preview click -> reliable `#comments`
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-303, V2-406
 

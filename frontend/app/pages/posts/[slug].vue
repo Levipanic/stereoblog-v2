@@ -38,6 +38,7 @@ useHead(() => ({ title: `${post.value?.title ?? t('posts')} — ${config.public.
       <header class="article-header">
         <h1>{{ post.title }}</h1>
         <div class="post-meta"><time :datetime="post.created_at">{{ postDate(post.created_at, language) }}</time><span>{{ t('readingTime', { minutes: post.reading_minutes }) }}</span></div>
+        <NuxtLink :to="`${route.path}#comments`" :prefetch="false">{{ t('discussionTitle') }}</NuxtLink>
       </header>
       <ReadingProgress :post-id="post.id" :article="article" />
       <div class="article-layout" :class="{ 'with-toc': hasTableOfContents(post.blocks) }">

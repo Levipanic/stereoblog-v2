@@ -21,6 +21,8 @@ const ready = ref(false)
 const feedback = ref<MessageKey | null>(null)
 const textarea = useTemplateRef<HTMLTextAreaElement>('textarea')
 const form = useTemplateRef<HTMLFormElement>('form')
+const discussion = useTemplateRef<HTMLElement>('discussion')
+useDiscussionAnchor(discussion)
 const controller = new AbortController()
 let expires = 0
 let preparing: Promise<void> | undefined
@@ -82,7 +84,7 @@ async function submit() {
 </script>
 
 <template>
-  <section id="comments" class="post-comments" aria-labelledby="comments-title" tabindex="-1">
+  <section id="comments" ref="discussion" class="post-comments" aria-labelledby="comments-title" tabindex="-1">
     <h2 id="comments-title">{{ t('discussionTitle') }}</h2>
     <form ref="form" class="comment-form" :aria-busy="sending" @submit.prevent="submit" @focusin="prepareOnFocus">
       <fieldset :disabled="sending">
