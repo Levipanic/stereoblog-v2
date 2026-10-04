@@ -12,7 +12,7 @@ export const feedItems: FeedItem[] = Array.from({ length: 32 }, (_, index) => ({
     ? 'Личный сайт — это место для длинных историй, музыки и разговоров. Всё важное остаётся рядом с текстом.'
     : 'A quiet place for writing, reading and sharing. This is a synthetic post for the browser checks.',
   preview_media: index < kinds.length ? {
-    mediaKind: kinds[index]!, src: '/uploads/fixture.svg', alt: 'Синтетическая иллюстрация',
+    mediaKind: kinds[index]!, src: kinds[index] === 'audio' ? '/uploads/fixture.wav' : '/uploads/fixture.svg', alt: 'Синтетическая иллюстрация',
     caption: index === 0 ? 'Тестовая иллюстрация — данные не из production.' : '',
     name: `attachment-${index + 1}`,
   } : null,

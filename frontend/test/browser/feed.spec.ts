@@ -23,12 +23,13 @@ test('SSR feed hydrates without API fanout, safely renders previews and likes in
   await expect(page.locator('.feed-post img').nth(1)).toHaveAttribute('loading', 'lazy')
   await expect(first.locator('img')).toHaveJSProperty('complete', true)
   expect(await first.locator('img').evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
-  expect(await page.locator('audio, video').count()).toBe(0)
+  await expect(page.locator('audio')).toHaveCount(1)
+  await expect(page.locator('audio')).not.toHaveAttribute('src')
   const count = Number(await first.locator('.like-count').textContent())
   // Different projects share the backend, so like a different fixture in each project.
   const likedPost = testInfo.project.name === 'mobile' ? page.locator('.feed-post').nth(1) : first
   const before = Number(await likedPost.locator('.like-count').textContent())
-  await likedPost.getByRole('button').click()
+  await likedPost.locator('.post-actions button').click()
   await expect(likedPost.locator('.like-count')).toHaveText(String(before + 1))
   await expect(likedPost.getByRole('status')).toHaveText('Спасибо! Лайк сохранён.')
   expect(page.url()).toMatch(/\/$/)

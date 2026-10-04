@@ -1223,7 +1223,9 @@ Make images feel first-class without a heavy gallery dependency.
 
 ---
 
-## [ ] V2-405 — Global persistent audio engine and mini-player
+## [-] V2-405 — Global persistent audio engine and mini-player
+
+Implemented and checked; awaiting owner acceptance. Native transport controls; optional waveform deferred.
 
 **Depends on:** V2-401, V2-306
 

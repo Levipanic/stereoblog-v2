@@ -67,6 +67,7 @@ async function like() {
         >
         <span v-else class="media-fallback">{{ t('mediaUnavailable') }}</span>
       </NuxtLink>
+      <InlineAudio v-else-if="post.preview_media.mediaKind === 'audio'" :src="mediaSrc" :name="post.preview_media.name || post.title" />
       <NuxtLink v-else :to="path" :prefetch="false" class="feed-attachment">
         <span>{{ t(post.preview_media.mediaKind) }}</span>
         <span v-if="post.preview_media.name" class="attachment-name">{{ post.preview_media.name }}</span>

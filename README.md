@@ -88,5 +88,15 @@ explicit retry after errors, duplicate suppression and an end state.
 Nuxt keeps the feed alive during same-session navigation, preserving loaded cards,
 cursor and card state. Browser Back and the post's Back button use native router
 scroll restoration. Reload starts from fresh SSR data; feed HTML is never saved in localStorage.
-The minimal `/posts/:slug` page currently displays the title and Back button for this flow.
-Full article rendering and discussion are still V2-401/V2-406. Phase 3 awaits owner acceptance.
+`/posts/:slug` renders canonical article blocks and rich text through shared components,
+with media, spoilers and localized error states. Long articles have a responsive TOC
+and stable heading anchors. Reading progress preserves the v1 numeric-ID storage format
+and 90% completion threshold, with a continue-reading action and feed status.
+
+Images load lazily into reserved frames and open in a native keyboard/touch-friendly
+dialog. A single app-level audio element continues across Nuxt navigation; article/feed
+buttons control the same track. The native mini-player provides transport/seek, a volume
+control preserving the v1 key, and close/release. Optional waveform rendering is deferred.
+No audio is fetched before interaction and no autoplay is attempted after a hard reload.
+Public commenting, sharing metadata, legacy redirects and the final public polish remain
+V2-406–V2-410. Completed implementation tasks await owner acceptance.

@@ -10,4 +10,5 @@ onBeforeUnmount(() => dispose?.())
 <template>
   <SiteHeader />
   <NuxtPage />
+  <GlobalAudioPlayer />
 </template>
