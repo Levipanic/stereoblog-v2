@@ -1267,7 +1267,9 @@ Waveform failure must not affect audio playback.
 
 ---
 
-## [ ] V2-406 — Public comments UI + low-friction composer
+## [-] V2-406 — Public comments UI + low-friction composer
+
+Implemented and checked; awaiting owner acceptance.
 
 **Depends on:** V2-204, V2-206, V2-207, V2-401
 

@@ -197,6 +197,22 @@ h1, h2, h3, p { margin-block: 0; }
 
 .feed-list { margin: 0; padding: 0; list-style: none; }
 .back-to-feed { margin-bottom: 1rem; }
+.post-comments { margin-top: 2rem; padding: clamp(1rem, 4vw, 2.5rem); background: var(--surface); scroll-margin-top: 5rem; }
+.post-comments h2 { margin-bottom: 1rem; }
+.comment-form { position: relative; margin-bottom: 1.5rem; scroll-margin-top: 5rem; }
+.comment-form fieldset { margin: 0; padding: 0; border: 0; }
+.comment-form label { display: block; margin-bottom: 0.3rem; }
+.comment-form input, .comment-form textarea { display: block; width: 100%; min-height: 44px; border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 0.5rem; margin-bottom: 0.75rem; border-radius: 4px; }
+.comment-form textarea { resize: vertical; }
+.comment-form input[name='name'] { max-width: 24rem; }
+.comment-honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); pointer-events: none; }
+.comment-thread { list-style: none; margin: 0; padding: 0; }
+.comment-item { padding: 1rem 0; border-top: 1px solid var(--border); scroll-margin-top: 5rem; }
+.comment-meta { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.875rem; }
+.comment-meta time, .comment-parent { color: var(--text-muted); font-size: 0.8rem; }
+.comment-text { white-space: pre-wrap; margin-block: 0.5rem; }
+.comment-actions { display: flex; gap: 0.5rem; }
+.reply-context, .comment-feedback { margin-block: 0.75rem; }
 .inline-audio { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem; background: var(--surface-alt); border: 1px solid var(--border); }
 .mini-player { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 25; width: min(100%, 40rem); padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom)); background: var(--surface); border: 1px solid var(--border); }
 .mini-player-title { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.875rem; }

@@ -44,8 +44,8 @@ useHead(() => ({ title: `${post.value?.title ?? t('posts')} — ${config.public.
         <PostToc v-if="hasTableOfContents(post.blocks)" :blocks="post.blocks" />
         <PostBody :blocks="post.blocks" />
       </div>
-      <p id="comments" class="feed-status">{{ t('discussionComingSoon') }}</p>
     </article>
+    <PostComments v-if="post" :post-id="post.id" />
     <section v-else class="feed-status" role="alert"><h1>{{ t(error?.statusCode === 404 ? 'postNotFound' : 'postUnavailable') }}</h1></section>
   </main>
 </template>

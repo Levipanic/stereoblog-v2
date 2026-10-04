@@ -50,7 +50,7 @@ try {
   execFileSync('go', ['build', '-o', binary, './cmd/server'], { cwd: fileURLToPath(new URL('../../../backend/', import.meta.url)), stdio: 'inherit' })
   mkdirSync(join(directory, 'uploads'))
   children.push(spawn(binary, [], {
-    env: { ...process.env, GIN_MODE: 'release', APP_ENV: 'test', API_HOST: '127.0.0.1', API_PORT: '4011', DB_PATH: join(directory, 'blog.db'), UPLOADS_PATH: join(directory, 'uploads'), ADMIN_SECRET: 'browser-test-secret' },
+    env: { ...process.env, GIN_MODE: 'release', APP_ENV: 'test', API_HOST: '127.0.0.1', API_PORT: '4011', DB_PATH: join(directory, 'blog.db'), UPLOADS_PATH: join(directory, 'uploads'), ADMIN_SECRET: 'browser-test-secret', COMMENT_COOLDOWN_SECONDS: '1', COMMENT_BURST_MAX: '100' },
     stdio: 'inherit',
   }))
   await ready('http://127.0.0.1:4011/api/v1/health')
