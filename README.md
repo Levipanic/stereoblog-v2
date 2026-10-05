@@ -116,5 +116,9 @@ Open `/admin` directly and sign in using the backend's configured `ADMIN_SECRET`
 (`change-me` only with the default local development configuration).
 V2-501 provides login, cookie-backed session checks, CSRF-protected logout and
 private navigation in RU/EN. Credentials are not stored in localStorage.
-The editor, post management, moderation and backup UI remain subsequent tasks;
-their sections are currently labeled as forthcoming.
+V2-502–503 add a client-only Tiptap writing surface with a title, rich formatting,
+headings/quotes/dividers, undo/redo, media placeholders and secondary slug settings.
+Explicit adapters retain StereoDamage blocks as the storage contract; editor code
+loads only after admin login. This surface does not yet save or publish: leaving
+loses the text. Autosave, uploads, preview, publishing, post management, moderation
+and backup UI remain subsequent tasks.

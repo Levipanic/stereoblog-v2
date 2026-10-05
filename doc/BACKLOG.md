@@ -1498,7 +1498,12 @@ Prove the editor can feel like rich text while canonical storage stays StereoDam
 
 ---
 
-## [ ] V2-503 — New-post writing surface
+## [-] V2-503 — New-post writing surface
+
+Implemented and checked; awaiting owner acceptance. Title, continuous writing,
+localized inline/structural controls, undo/redo, media placeholders and secondary
+slug settings are available. Toolbar wraps in normal document flow on phones.
+Autosave/upload/preview/publish remain subsequent tasks and the UI states this.
 
 **Depends on:** V2-502
 
