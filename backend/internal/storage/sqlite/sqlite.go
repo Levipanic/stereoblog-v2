@@ -27,8 +27,9 @@ type queryer interface {
 }
 
 const (
-	SchemaFresh Schema = "fresh"
-	SchemaV1    Schema = "v1"
+	SchemaFresh   Schema = "fresh"
+	SchemaV1      Schema = "v1"
+	SchemaEarlyV1 Schema = "v1-early"
 )
 
 var (
@@ -118,6 +119,16 @@ func Inspect(ctx context.Context, db *sql.DB) (Schema, error) {
 }
 
 func inspect(ctx context.Context, db queryer) (Schema, error) {
+	schema, err := inspectProfile(ctx, db, false)
+	if errors.Is(err, ErrUnsupportedSchema) {
+		if early, earlyErr := inspectProfile(ctx, db, true); earlyErr == nil && early == SchemaEarlyV1 {
+			return early, nil
+		}
+	}
+	return schema, err
+}
+
+func inspectProfile(ctx context.Context, db queryer, early bool) (Schema, error) {
 	if err := quickCheck(ctx, db); err != nil {
 		return "", err
 	}
@@ -153,7 +164,21 @@ func inspect(ctx context.Context, db queryer) (Schema, error) {
 	}
 
 	var incompatible []string
-	for table, signature := range v1Signatures {
+	signatures := v1Signatures
+	if early {
+		signatures = map[string]string{
+			"posts":          strings.Split(v1Signatures["posts"], ",preview_media:")[0],
+			"comments":       strings.Split(v1Signatures["comments"], ",likes_count:")[0],
+			"like_events":    v1Signatures["like_events"],
+			"admin_sessions": v1Signatures["admin_sessions"],
+		}
+		for _, table := range tables {
+			if _, ok := signatures[table]; !ok && table != "schema_migrations" {
+				incompatible = append(incompatible, "unexpected table "+table)
+			}
+		}
+	}
+	for table, signature := range signatures {
 		if !slices.Contains(tables, table) {
 			incompatible = append(incompatible, "table "+table)
 			continue
@@ -162,7 +187,7 @@ func inspect(ctx context.Context, db queryer) (Schema, error) {
 		if err != nil {
 			return "", err
 		}
-		if actual != signature && !strings.HasPrefix(actual, signature+",") {
+		if actual != signature && (early || !strings.HasPrefix(actual, signature+",")) {
 			incompatible = append(incompatible, "table "+table+" columns")
 		}
 		foreignKeys, err := foreignKeys(ctx, db, table)
@@ -193,6 +218,9 @@ func inspect(ctx context.Context, db queryer) (Schema, error) {
 			}
 		}
 		for name, required := range requiredIndexes[table] {
+			if early && name == "idx_comments_status_created" {
+				continue
+			}
 			actual, exists, err := indexSignature(ctx, db, table, name)
 			if err != nil {
 				return "", err
@@ -214,6 +242,9 @@ func inspect(ctx context.Context, db queryer) (Schema, error) {
 	if len(incompatible) != 0 {
 		slices.Sort(incompatible)
 		return "", fmt.Errorf("%w: incompatible %s", ErrUnsupportedSchema, strings.Join(incompatible, ", "))
+	}
+	if early {
+		return SchemaEarlyV1, nil
 	}
 	return SchemaV1, nil
 }

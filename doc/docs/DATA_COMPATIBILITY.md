@@ -38,6 +38,20 @@ The v1 `db.js` contains historical reset behavior. It must not be copied to v2.
 
 ### Existing v1 database
 
+The early four-table v1 schema (posts, comments, like_events, admin_sessions),
+as found in the July 2026 backup, is also recognized strictly. Before the baseline
+is recorded, its missing preview/comment columns are added and the later v1
+tables/indexes are created in the same migration transaction. Existing columns
+and rows are retained. Production startup takes a snapshot before these changes.
+Partial or unknown schema variants remain rejected rather than guessed/repaired.
+
+Rehearsal on 2026-10-05: a fresh extraction of the July backup migrated in
+production mode without manual SQL preparation. Original values in all four
+tables were compared before/after and matched; the safety snapshot retained the
+early schema. Audit passed at version 2/2: 5 posts, 34 comments, 85 post likes,
+8 post-like events, 17 media references, no missing uploads or FK violations.
+This validates this backup, not the final fresh-data release rehearsal.
+
 On first v2 startup against a v1 DB:
 
 1. Open DB carefully and identify schema.

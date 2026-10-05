@@ -109,7 +109,7 @@ type migration struct {
 }
 
 var migrations = []migration{
-	{version: 1, name: "v1_baseline", sql: v1BaselineSQL},
+	{version: 1, name: "v1_baseline", apply: applyBaseline},
 	{version: 2, name: "post_slugs", apply: addPostSlugs},
 }
 
@@ -117,6 +117,30 @@ type MigrationResult struct {
 	Version    int
 	Applied    int
 	BackupPath string
+}
+
+func applyBaseline(ctx context.Context, conn *sql.Conn) error {
+	schema, err := inspect(ctx, conn)
+	// The migration metadata table has already been created on fresh databases.
+	if err != nil {
+		var tables int
+		if countErr := conn.QueryRowContext(ctx, "SELECT count(*) FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'schema_migrations'").Scan(&tables); countErr != nil || tables != 0 {
+			return err
+		}
+	}
+	if schema == SchemaEarlyV1 {
+		if _, err := conn.ExecContext(ctx, `
+ALTER TABLE posts ADD COLUMN preview_media TEXT DEFAULT NULL;
+ALTER TABLE comments ADD COLUMN likes_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE comments ADD COLUMN status TEXT NOT NULL DEFAULT 'visible';
+ALTER TABLE comments ADD COLUMN moderation_reason TEXT;
+ALTER TABLE comments ADD COLUMN text_hash TEXT;
+ALTER TABLE comments ADD COLUMN text_fingerprint TEXT;`); err != nil {
+			return err
+		}
+	}
+	_, err = conn.ExecContext(ctx, v1BaselineSQL)
+	return err
 }
 
 func Migrate(ctx context.Context, db *sql.DB, databasePath string, schema Schema, production bool) (MigrationResult, error) {
@@ -255,8 +279,12 @@ func applyMigrations(ctx context.Context, db *sql.DB, available []migration) (ap
 }
 
 func validateMigratedSchema(ctx context.Context, db queryer, applied []migration) error {
-	if _, err := inspect(ctx, db); err != nil {
+	schema, err := inspect(ctx, db)
+	if err != nil {
 		return fmt.Errorf("verify migrated schema: %w", err)
+	}
+	if len(applied) > 0 && schema != SchemaV1 {
+		return errors.New("verify migrated schema: baseline is incomplete")
 	}
 	if len(applied) < 2 {
 		return nil
