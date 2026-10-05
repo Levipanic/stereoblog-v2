@@ -12,7 +12,7 @@ const config = useRuntimeConfig()
 const { t, language } = useReaderSettings()
 const slug = String(route.params.slug)
 const article = useTemplateRef<HTMLElement>('article')
-const { data: post, error } = await useAsyncData(`post:${slug}`, async (_app, { signal }) => {
+const { data: post, error, status, refresh } = await useAsyncData(`post:${slug}`, async (_app, { signal }) => {
   try { return await api.post(slug, { signal }) }
   catch (error) {
     throw createError({ statusCode: error instanceof ApiError && error.status === 404 ? 404 : 502, statusMessage: 'Post unavailable' })
@@ -31,7 +31,7 @@ function back() {
 
 const metadata = computed(() => post.value ? postMetadata(post.value, config.public.siteUrl, config.public.siteName) : null)
 useHead(() => ({
-  title: `${post.value?.title ?? t('postNotFound')} — ${config.public.siteName}`,
+  title: `${post.value?.title ?? t(error.value?.statusCode === 404 ? 'postNotFound' : 'postUnavailable')} — ${config.public.siteName}`,
   link: metadata.value ? [{ rel: 'canonical', href: metadata.value.url }] : [],
   meta: metadata.value ? [
     { name: 'description', content: metadata.value.description },
@@ -72,6 +72,9 @@ useHead(() => ({
       </div>
     </article>
     <PostComments v-if="post" :post-id="post.id" />
-    <section v-else class="feed-status" role="alert"><h1>{{ t(error?.statusCode === 404 ? 'postNotFound' : 'postUnavailable') }}</h1></section>
+    <section v-else class="feed-status" role="alert" :aria-busy="status === 'pending'">
+      <h1>{{ t(error?.statusCode === 404 ? 'postNotFound' : 'postUnavailable') }}</h1>
+      <button v-if="error?.statusCode !== 404" type="button" :disabled="status === 'pending'" @click="refresh()">{{ t('retry') }}</button>
+    </section>
   </main>
 </template>

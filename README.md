@@ -104,6 +104,8 @@ Sharing uses native Web Share or clipboard/manual fallback. Article canonical/Op
 Twitter metadata is server-rendered; set `NUXT_PUBLIC_SITE_URL` to the production origin.
 The fallback share image is the committed `frontend/public/og-default.png`; regenerate it
 from the SVG using `node frontend/scripts/generate-og.ts` with Playwright Chromium installed.
-Legacy links redirect to canonical slugs. Final public polish remains V2-410.
+Legacy links redirect to canonical slugs. V2-410 functional polish is implemented:
+article failures can be retried, and settings fit short viewports; RU/EN and both
+themes have desktop/mobile browser checks.
 Implementation through V2-409 is accepted by the owner; further visual refinements
 will follow separately from the admin/editor work.

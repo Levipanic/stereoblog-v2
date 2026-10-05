@@ -142,6 +142,8 @@ h1, h2, h3, p { margin-block: 0; }
 .reader-settings[open] summary { border-color: currentColor; }
 
 .settings-panel {
+  max-height: calc(100dvh - 5rem);
+  overflow-y: auto;
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;

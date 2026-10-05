@@ -1384,7 +1384,12 @@ Never break old social links already shared by owner.
 
 ---
 
-## [ ] V2-410 — Public UX/i18n/settings polish pass
+## [-] V2-410 — Public UX/i18n/settings polish pass
+
+Implemented and checked: recoverable article failures have retry and correct page
+titles; settings scroll within short viewports. RU/EN, both themes, reduced motion,
+storage failure and desktop/mobile browser checks pass. Visual refinements remain
+deferred by the owner; awaiting acceptance of this functional polish pass.
 
 **Depends on:** V2-402 through V2-409
 
