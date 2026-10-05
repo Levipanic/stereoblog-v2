@@ -74,7 +74,7 @@ The Go API implements public posts/feed, post/comment likes, anonymous comments
 and antispam, admin sessions/CSRF, post CRUD, uploads, moderation, and full backups.
 See [`doc/docs/BACKEND_API.md`](doc/docs/BACKEND_API.md) for endpoint contracts and
 [`doc/docs/DEPLOYMENT.md`](doc/docs/DEPLOYMENT.md#admin-portable-backup) for restore steps.
-Backend Phase 2 is implemented and awaiting the owner's phase-gate review;
+Backend Phase 2 is implemented and accepted by the owner;
 the remaining Nuxt UI and deployment/release work is tracked in the backlog.
 
 ## Public frontend status
@@ -104,5 +104,6 @@ Sharing uses native Web Share or clipboard/manual fallback. Article canonical/Op
 Twitter metadata is server-rendered; set `NUXT_PUBLIC_SITE_URL` to the production origin.
 The fallback share image is the committed `frontend/public/og-default.png`; regenerate it
 from the SVG using `node frontend/scripts/generate-og.ts` with Playwright Chromium installed.
-Legacy redirects and the final public polish remain V2-409–V2-410.
-Completed implementation tasks await owner acceptance.
+Legacy links redirect to canonical slugs. Final public polish remains V2-410.
+Implementation through V2-409 is accepted by the owner; further visual refinements
+will follow separately from the admin/editor work.

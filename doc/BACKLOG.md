@@ -19,6 +19,11 @@ Task status notation:
 
 ## Roadmap at a glance
 
+Owner acceptance (2026-10-05): implementation V2-207–212, V2-301–306 and
+V2-401–409 is accepted. The implementation notes below about awaiting acceptance
+are historical and superseded by this decision. Further visual refinements are
+deferred; V2-410 and later tasks remain open.
+
 | Phase | Purpose | Gate before continuing |
 |---|---|---|
 | 0 | Clean Go/Nuxt repo + dev workflow | Both processes/builds/SSR work and project still feels intentionally small |
@@ -683,7 +688,7 @@ Enable anonymous/named comments and replies through the ported antispam pipeline
 
 ---
 
-## [-] V2-207 — Comment likes parity
+## [x] V2-207 — Comment likes parity
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -702,7 +707,7 @@ Port anonymous comment likes with v1-style protections.
 
 ---
 
-## [-] V2-208 — Admin authentication/session/CSRF
+## [x] V2-208 — Admin authentication/session/CSRF
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -742,7 +747,7 @@ Establish secure single-owner admin auth before any v2 write endpoints.
 
 ---
 
-## [-] V2-209 — Admin post CRUD using canonical block validation
+## [x] V2-209 — Admin post CRUD using canonical block validation
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -776,7 +781,7 @@ Provide create/edit/delete endpoints for one author, including slug behavior.
 
 ---
 
-## [-] V2-210 — Local filesystem upload API
+## [x] V2-210 — Local filesystem upload API
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -816,7 +821,7 @@ Handle SVG deliberately. Preserve safe access to historical SVGs but do not blin
 
 ---
 
-## [-] V2-211 — Admin moderation API parity
+## [x] V2-211 — Admin moderation API parity
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -847,7 +852,7 @@ Port the useful moderation controls from v1.
 
 ---
 
-## [-] V2-212 — Portable full backup service/API
+## [x] V2-212 — Portable full backup service/API
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -900,7 +905,7 @@ Backend parity can be exercised through API tests against migrated v1 fixture/pr
 
 Goal: replace the public MPA with SSR Nuxt while preserving StereoDamage identity and making feed navigation genuinely better.
 
-## [-] V2-301 — Typed frontend API client and shared public data types
+## [x] V2-301 — Typed frontend API client and shared public data types
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -932,7 +937,7 @@ Create a small typed boundary between Nuxt and Gin.
 
 ---
 
-## [-] V2-302 — Global visual foundation and v1 settings compatibility
+## [x] V2-302 — Global visual foundation and v1 settings compatibility
 
 Implemented and checked on desktop/mobile viewports; awaiting owner visual acceptance.
 
@@ -973,7 +978,7 @@ Owner must approve overall vibe before many pages are built.
 
 ---
 
-## [-] V2-303 — SSR feed/list view
+## [x] V2-303 — SSR feed/list view
 
 Implemented and checked with production SSR and desktop/mobile browser tests; awaiting owner acceptance.
 Article/discussion links use their canonical URLs; destination pages arrive in V2-401/V2-406.
@@ -1011,7 +1016,7 @@ Render the first feed page as immediate, content-rich SSR HTML.
 
 ---
 
-## [-] V2-304 — Grid feed mode parity
+## [x] V2-304 — Grid feed mode parity
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1036,7 +1041,7 @@ Preserve v1 grid mode with v2 media/responsive polish.
 
 ---
 
-## [-] V2-305 — Infinite scroll with cursor loading
+## [x] V2-305 — Infinite scroll with cursor loading
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1065,7 +1070,7 @@ Turn feed into a long seamless timeline without sacrificing reliability.
 
 ---
 
-## [-] V2-306 — Feed state and scroll restoration across post navigation
+## [x] V2-306 — Feed state and scroll restoration across post navigation
 
 Implemented and checked; awaiting owner acceptance.
 Uses Nuxt KeepAlive for the feed and native router history scroll restoration.
@@ -1109,7 +1114,7 @@ Owner browses the v2 timeline on phone/desktop for several pages and confirms it
 
 Goal: make opening and reading a shared post the strongest public experience.
 
-## [-] V2-401 — Canonical `/posts/:slug` SSR article route
+## [x] V2-401 — Canonical `/posts/:slug` SSR article route
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1139,7 +1144,7 @@ Render migrated v1 long reads at canonical slug URLs with a true reading-oriente
 
 ---
 
-## [-] V2-402 — Reader progress + continue-reading compatibility
+## [x] V2-402 — Reader progress + continue-reading compatibility
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1167,7 +1172,7 @@ Preserve v1 reader-state value with quieter UX.
 
 ---
 
-## [-] V2-403 — Long-read TOC and heading anchors
+## [x] V2-403 — Long-read TOC and heading anchors
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1194,7 +1199,7 @@ Preserve/improve v1 TOC without adding chrome to short posts.
 
 ---
 
-## [-] V2-404 — Image/media responsiveness and lightweight image viewer
+## [x] V2-404 — Image/media responsiveness and lightweight image viewer
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1223,7 +1228,7 @@ Make images feel first-class without a heavy gallery dependency.
 
 ---
 
-## [-] V2-405 — Global persistent audio engine and mini-player
+## [x] V2-405 — Global persistent audio engine and mini-player
 
 Implemented and checked; awaiting owner acceptance. Native transport controls; optional waveform deferred.
 
@@ -1267,7 +1272,7 @@ Waveform failure must not affect audio playback.
 
 ---
 
-## [-] V2-406 — Public comments UI + low-friction composer
+## [x] V2-406 — Public comments UI + low-friction composer
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1299,7 +1304,7 @@ Make discussion easy without copying imageboard UI.
 
 ---
 
-## [-] V2-407 — Feed comment-preview click -> reliable `#comments`
+## [x] V2-407 — Feed comment-preview click -> reliable `#comments`
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1323,7 +1328,7 @@ Reader can choose “read post” vs “join discussion” from feed.
 
 ---
 
-## [-] V2-408 — Sharing UI + canonical SEO/Open Graph metadata
+## [x] V2-408 — Sharing UI + canonical SEO/Open Graph metadata
 
 Implemented and checked; awaiting owner acceptance.
 
@@ -1353,7 +1358,7 @@ Make “send this long read to someone” a polished first-class flow.
 
 ---
 
-## [-] V2-409 — Legacy `/post.html?id=` redirect compatibility
+## [x] V2-409 — Legacy `/post.html?id=` redirect compatibility
 
 Implemented and checked; awaiting owner acceptance.
 
