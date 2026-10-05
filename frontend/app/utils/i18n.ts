@@ -1,4 +1,5 @@
 const ru = {
+  editorBody: 'Текст поста',
   admin: 'Управление блогом',
   adminSecret: 'Пароль администратора',
   adminLogin: 'Войти',
@@ -100,6 +101,7 @@ const ru = {
 export type MessageKey = keyof typeof ru
 
 const en: Record<MessageKey, string> = {
+  editorBody: 'Post body',
   admin: 'Blog administration',
   adminSecret: 'Admin password',
   adminLogin: 'Sign in',

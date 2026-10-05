@@ -59,7 +59,8 @@ onMounted(() => run(check, true))
         <nav :aria-label="t('admin')"><a v-for="section in sections" :key="section.id" :href="`#admin-${section.id}`">{{ t(section.label) }}</a></nav>
         <section v-for="section in sections" :id="`admin-${section.id}`" :key="section.id">
           <h2>{{ t(section.label) }}</h2>
-          <p>{{ t('adminUpcoming') }}</p>
+          <LazyAdminWriter v-if="section.id === 'write'" :blocks="[]" />
+          <p v-else>{{ t('adminUpcoming') }}</p>
         </section>
       </div>
     </template>

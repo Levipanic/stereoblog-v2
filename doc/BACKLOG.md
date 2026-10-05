@@ -1459,7 +1459,12 @@ Admin home prioritizes New/Resume Post, Posts, Moderation, Backup.
 
 ---
 
-## [ ] V2-502 — StereoDamage editor adapter and rich-text engine spike
+## [-] V2-502 — StereoDamage editor adapter and rich-text engine spike
+
+Implemented: client-only Tiptap with explicit extensions and canonical adapters.
+Round trips preserve text/marks and opaque media metadata; unsupported blocks and
+unsafe links reject conversion. Editor loads only in the authenticated admin area.
+Awaiting owner acceptance.
 
 **Depends on:** V2-105, V2-501
 
