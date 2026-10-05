@@ -109,3 +109,12 @@ article failures can be retried, and settings fit short viewports; RU/EN and bot
 themes have desktop/mobile browser checks.
 Implementation through V2-409 is accepted by the owner; further visual refinements
 will follow separately from the admin/editor work.
+
+## Private admin status
+
+Open `/admin` directly and sign in using the backend's configured `ADMIN_SECRET`
+(`change-me` only with the default local development configuration).
+V2-501 provides login, cookie-backed session checks, CSRF-protected logout and
+private navigation in RU/EN. Credentials are not stored in localStorage.
+The editor, post management, moderation and backup UI remain subsequent tasks;
+their sections are currently labeled as forthcoming.

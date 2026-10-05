@@ -25,19 +25,19 @@ function isErrorBody(value: unknown): value is ApiErrorBody {
     && 'message' in detail && typeof detail.message === 'string'
 }
 
-export interface RequestOptions { signal?: AbortSignal }
+export interface RequestOptions { signal?: AbortSignal, headers?: Record<string, string> }
 export interface FeedQuery { cursor?: string, limit?: number }
 
 // Native fetch works in Nitro and browsers; useAsyncData owns SSR payload/deduplication.
-export function createPublicApi(baseURL: string, fetcher: typeof fetch = globalThis.fetch) {
+export function createApiRequest(baseURL: string, fetcher: typeof fetch = globalThis.fetch) {
   const base = baseURL.replace(/\/+$/, '')
 
-  async function request<T>(path: string, options: RequestOptions = {}, body?: object): Promise<T> {
+  return async function request<T>(path: string, options: RequestOptions = {}, body?: object): Promise<T> {
     let response: Response
     try {
       response = await fetcher(`${base}${path}`, {
         method: body === undefined ? 'GET' : 'POST',
-        headers: body === undefined ? { Accept: 'application/json' } : { Accept: 'application/json', 'Content-Type': 'application/json' },
+        headers: { Accept: 'application/json', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...options.headers },
         body: body === undefined ? undefined : JSON.stringify(body),
         credentials: 'same-origin',
         signal: options.signal ?? AbortSignal.timeout(15_000),
@@ -66,6 +66,10 @@ export function createPublicApi(baseURL: string, fetcher: typeof fetch = globalT
     return data as T
   }
 
+}
+
+export function createPublicApi(baseURL: string, fetcher: typeof fetch = globalThis.fetch) {
+  const request = createApiRequest(baseURL, fetcher)
   return {
     health: (options?: RequestOptions) => request<Health>('/health', options),
     feed: (query: FeedQuery = {}, options?: RequestOptions) => {

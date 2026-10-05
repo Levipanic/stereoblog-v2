@@ -1423,7 +1423,13 @@ Owner shares a v2 test post link to phone/desktop, reads it, plays media, commen
 
 Goal: transform authoring from “manage JSON blocks/uploads” into a lightweight writing experience, including mobile.
 
-## [ ] V2-501 — Private admin login/shell
+## [-] V2-501 — Private admin login/shell
+
+Implemented and checked; awaiting owner acceptance. Client-only login/session/
+logout flow, in-memory CSRF helper, localized errors and private section navigation.
+New/resume, posts, moderation and backup sections explicitly indicate that their
+workflows arrive in subsequent tasks. Desktop/mobile RU/EN browser checks cover
+wrong credentials, refresh, CSRF rejection, logout, lost sessions and network retry.
 
 **Depends on:** V2-208, V2-302
 
