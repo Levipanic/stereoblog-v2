@@ -1530,7 +1530,13 @@ Make starting/writing a long post feel natural and low-friction.
 
 ---
 
-## [ ] V2-504 — Direct media insertion at cursor/block position
+## [-] V2-504 — Direct media insertion at cursor/block position
+
+Implemented native file insertion at the saved cursor, upload busy/error feedback,
+caption/alt/name/spoiler editing and touch-friendly move/remove controls. Failed
+uploads leave no phantom block. Typecheck, unit tests, production build and desktop/
+mobile Chromium editor checks pass. Real-phone picker acceptance remains with owner;
+optional desktop paste/drop is deferred.
 
 **Depends on:** V2-210, V2-503
 

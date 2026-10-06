@@ -25,7 +25,7 @@ function isErrorBody(value: unknown): value is ApiErrorBody {
     && 'message' in detail && typeof detail.message === 'string'
 }
 
-export interface RequestOptions { signal?: AbortSignal, headers?: Record<string, string> }
+export interface RequestOptions { signal?: AbortSignal, headers?: Record<string, string>, method?: 'GET' | 'POST' | 'PUT' | 'DELETE' }
 export interface FeedQuery { cursor?: string, limit?: number }
 
 // Native fetch works in Nitro and browsers; useAsyncData owns SSR payload/deduplication.
@@ -36,9 +36,9 @@ export function createApiRequest(baseURL: string, fetcher: typeof fetch = global
     let response: Response
     try {
       response = await fetcher(`${base}${path}`, {
-        method: body === undefined ? 'GET' : 'POST',
-        headers: { Accept: 'application/json', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...options.headers },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        method: options.method ?? (body === undefined ? 'GET' : 'POST'),
+        headers: { Accept: 'application/json', ...(body === undefined || body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), ...options.headers },
+        body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
         credentials: 'same-origin',
         signal: options.signal ?? AbortSignal.timeout(15_000),
       })
@@ -62,7 +62,7 @@ export function createApiRequest(baseURL: string, fetcher: typeof fetch = global
         Number.isFinite(retry) && retry >= 0 ? retry : null,
       )
     }
-    if (data === null) throw new ApiError(502, 'invalid_response', 'API returned invalid JSON.')
+    if (data === null && response.status !== 204) throw new ApiError(502, 'invalid_response', 'API returned invalid JSON.')
     return data as T
   }
 

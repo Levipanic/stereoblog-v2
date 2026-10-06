@@ -1,4 +1,13 @@
 const ru = {
+  insertMedia: 'Добавить медиа / файл',
+  uploadingMedia: 'Загружаем файл…',
+  mediaName: 'Название файла',
+  mediaAlt: 'Описание изображения',
+  mediaCaption: 'Подпись',
+  mediaSpoiler: 'Спойлер',
+  moveUp: 'Выше',
+  moveDown: 'Ниже',
+  removeMedia: 'Убрать медиа',
   editorBody: 'Текст поста',
   editorTitle: 'Заголовок',
   editorBold: 'Жирный',
@@ -119,6 +128,15 @@ const ru = {
 export type MessageKey = keyof typeof ru
 
 const en: Record<MessageKey, string> = {
+  insertMedia: 'Insert media / file',
+  uploadingMedia: 'Uploading file…',
+  mediaName: 'File name',
+  mediaAlt: 'Image description',
+  mediaCaption: 'Caption',
+  mediaSpoiler: 'Spoiler',
+  moveUp: 'Move up',
+  moveDown: 'Move down',
+  removeMedia: 'Remove media',
   editorBody: 'Post body',
   editorTitle: 'Title',
   editorBold: 'Bold',

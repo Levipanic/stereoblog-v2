@@ -7,15 +7,17 @@ export function useAdminSession() {
   const session = useState<AdminSession>('admin-session', () => ({ authenticated: false }))
   const request = createApiRequest(config.public.apiBase)
 
-  async function write<T>(path: string, body: object = {}) {
+  async function adminRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', body?: object) {
     try {
-      return await request<T>(`/admin${path}`, { headers: { 'X-CSRF-Token': session.value.csrf_token ?? '' } }, body)
+      return await request<T>(`/admin${path}`, { method, headers: { 'X-CSRF-Token': session.value.csrf_token ?? '' } }, body)
     }
     catch (error) {
       if (error instanceof ApiError && error.status === 401) session.value = { authenticated: false }
       throw error
     }
   }
+  const read = <T>(path: string) => adminRequest<T>(path, 'GET')
+  const write = <T>(path: string, body: object = {}, method: 'POST' | 'PUT' | 'DELETE' = 'POST') => adminRequest<T>(path, method, body)
   async function check() {
     session.value = { authenticated: false }
     session.value = await request<AdminSession>('/admin/session')
@@ -27,5 +29,5 @@ export function useAdminSession() {
     await write('/logout')
     session.value = { authenticated: false }
   }
-  return { session: readonly(session), check, login, logout, write }
+  return { session: readonly(session), check, login, logout, read, write }
 }
