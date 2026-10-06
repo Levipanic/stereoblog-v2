@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Block } from '~/types/api'
 import { articleHeadings } from '~/utils/content'
-const props = defineProps<{ blocks: Block[] }>()
+const props = defineProps<{ blocks: Block[], preview?: boolean }>()
 const anchors = computed(() => new Map(articleHeadings(props.blocks).map(heading => [heading.index, heading.id])))
 const { t } = useReaderSettings()
 </script>
@@ -15,7 +15,7 @@ const { t } = useReaderSettings()
       <hr v-else-if="block.type === 'divider'">
       <component :is="block.spoiler ? 'details' : 'div'" v-else-if="block.type === 'media'" class="media-block">
         <summary v-if="block.spoiler">{{ t('revealSpoiler') }}</summary>
-        <PostMedia :block="block" />
+        <PostMedia :block="block" :preview="preview" />
       </component>
       <p v-else class="unsupported-block">{{ t('unsupportedBlock') }}</p>
     </template>

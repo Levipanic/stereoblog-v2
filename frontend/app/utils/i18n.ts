@@ -1,4 +1,11 @@
 const ru = {
+  draftRecovered: 'Восстановлен локальный черновик. Изменения ещё не опубликованы.',
+  draftSaved: 'Черновик сохранён на этом устройстве.',
+  draftStorageError: 'Не удалось прочитать или сохранить черновик. Сохраните текст перед уходом.',
+  discardDraft: 'Сбросить черновик',
+  discardDraftConfirm: 'Удалить локальные правки и вернуться к исходному тексту?',
+  previewDraft: 'Предпросмотр',
+  closePreview: 'Вернуться к редактированию',
   insertMedia: 'Добавить медиа / файл',
   uploadingMedia: 'Загружаем файл…',
   mediaName: 'Название файла',
@@ -128,6 +135,13 @@ const ru = {
 export type MessageKey = keyof typeof ru
 
 const en: Record<MessageKey, string> = {
+  draftRecovered: 'Local draft recovered. Changes are not published yet.',
+  draftSaved: 'Draft saved on this device.',
+  draftStorageError: 'Could not read or save the draft. Copy your text before leaving.',
+  discardDraft: 'Reset draft',
+  discardDraftConfirm: 'Discard local changes and return to the original text?',
+  previewDraft: 'Preview',
+  closePreview: 'Back to editing',
   insertMedia: 'Insert media / file',
   uploadingMedia: 'Uploading file…',
   mediaName: 'File name',

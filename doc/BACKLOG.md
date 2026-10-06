@@ -1567,7 +1567,12 @@ Eliminate v1's separate upload-then-insert workflow.
 
 ---
 
-## [ ] V2-505 — Autosave and draft recovery
+## [-] V2-505 — Autosave and draft recovery
+
+Implemented debounced device-local drafts, validation on recovery, saved/error states
+and confirmed reset. New and existing-post keys are distinct; no public writes occur.
+Unload flushes pending edits and warns on storage/validation/upload problems.
+Unit tests and desktop/mobile reload/recovery/reset checks pass; awaiting owner acceptance.
 
 **Depends on:** V2-503
 
@@ -1594,7 +1599,11 @@ Optionally introduce server draft persistence only if clearly justified and scop
 
 ---
 
-## [ ] V2-506 — Exact public-renderer preview
+## [-] V2-506 — Exact public-renderer preview
+
+Implemented reversible preview of unsaved canonical blocks using PostBody/PostMedia.
+Audio preview uses a local native player rather than changing the public global track.
+Desktop/mobile preview and return-to-editor checks pass; awaiting owner acceptance.
 
 **Depends on:** V2-401, V2-503, V2-504
 

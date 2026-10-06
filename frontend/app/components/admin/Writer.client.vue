@@ -16,7 +16,7 @@ import { blocksToDocument, documentToBlocks } from '~/utils/editor'
 import { safeLink } from '~/utils/content'
 
 const props = defineProps<{ blocks: Block[] }>()
-const emit = defineEmits<{ change: [blocks: Block[]], invalid: [] }>()
+const emit = defineEmits<{ change: [blocks: Block[]], invalid: [], uploading: [value: boolean] }>()
 const { t } = useReaderSettings()
 const invalid = ref(false)
 const { write } = useAdminSession()
@@ -35,7 +35,7 @@ const Media = Node.create({ name: 'media', group: 'block', atom: true,
 const editor = useEditor({
   extensions: [Document, Paragraph, Text, Heading.configure({ levels: [1, 2, 3] }), Bold, Italic, Code,
     Link.configure({ openOnClick: false, autolink: false, isAllowedUri: url => !!safeLink(url) }), HorizontalRule, UndoRedo, Quote, Media],
-  content: blocksToDocument(props.blocks),
+  content: blocksToDocument(toRaw(props.blocks)),
   editorProps: { attributes: { role: 'textbox', 'aria-multiline': 'true', 'aria-label': t('editorBody') } },
   onUpdate: ({ editor }) => {
     try { emit('change', documentToBlocks(editor.getJSON())); invalid.value = false }
@@ -52,6 +52,7 @@ async function upload(event: Event) {
   const file = input.files?.[0]
   if (!file || !editor.value || uploading.value) return
   uploading.value = true
+  emit('uploading', true)
   uploadError.value = false
   editor.value.setEditable(false)
   try {
@@ -63,7 +64,7 @@ async function upload(event: Event) {
     } } }).run()
   }
   catch { uploadError.value = true }
-  finally { uploading.value = false; editor.value?.setEditable(true); input.value = '' }
+  finally { uploading.value = false; emit('uploading', false); editor.value?.setEditable(true); input.value = '' }
 }
 function metadata(key: 'alt' | 'caption' | 'name' | 'spoiler', value: string | boolean) {
   editor.value?.chain().focus().updateAttributes('media', { block: { ...selectedMedia.value, [key]: value } }).run()
