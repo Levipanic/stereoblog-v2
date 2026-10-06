@@ -1689,7 +1689,14 @@ Edit old migrated v1 posts and new v2 posts through the same friendly editor.
 
 ---
 
-## [ ] V2-509 — Admin moderation UI
+## [-] V2-509 — Admin moderation UI
+
+Implemented pending queue/count, post context links, approve/reject, confirmed
+subtree deletion, secondary attempts/mutes and unmute. Sensitive content is rendered
+as text; only short hashes are displayed. Real-API RU/EN desktop/mobile checks cover
+CSRF, failed requests/retry, subtree deletion and session expiry. Full 74-case browser
+suite, 19 frontend unit checks, typecheck/build, SSR check and Go tests/vet pass.
+Awaiting owner acceptance.
 
 **Depends on:** V2-211, V2-501
 

@@ -62,6 +62,15 @@ try {
     insertPost.run(post.id, post.slug, post.title, JSON.stringify(blocks), post.preview_media ? JSON.stringify(post.preview_media) : null, post.likes, post.created_at)
     for (const comment of post.comment_previews) insertComment.run(comment.id, post.id, comment.parent_id, comment.name, comment.content, comment.created_at)
   }
+  for (let group = 0; group < 4; group++) {
+    const base = 20000 + group * 10
+    for (let offset = 0; offset < 4; offset++) {
+      db.prepare("INSERT INTO comments (id, post_id, parent_id, content, status, moderation_reason) VALUES (?, 32, ?, ?, 'pending', 'review')")
+        .run(base + offset, offset === 3 ? base + 2 : null, `<img src=x onerror=alert(1)> Moderation ${base + offset}`)
+    }
+    db.prepare("INSERT INTO comment_mutes (id, ip_hash, muted_until, reason) VALUES (?, ?, '2099-01-01 00:00:00', 'fixture mute')").run(base, `hash${base}private-suffix`)
+    db.prepare("INSERT INTO comment_attempts (id, ip_hash, post_id, status, content) VALUES (?, ?, 32, 'pending', '<script>untrusted</script>')").run(base, `hash${base}private-suffix`)
+  }
   db.close()
   writeFileSync(join(directory, 'uploads', 'fixture.svg'), fixtureImage)
   writeFileSync(join(directory, 'uploads', 'fixture.txt'), 'Fixture attachment')

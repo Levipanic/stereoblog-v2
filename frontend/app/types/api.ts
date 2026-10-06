@@ -61,6 +61,16 @@ export interface Post extends PostSummary {
 
 export type AdminPost = Pick<Post, 'id' | 'title' | 'slug' | 'blocks' | 'preview_media' | 'created_at'>
 
+export interface PendingComment extends CommentPreview { post_id: number, moderation_reason: string | null }
+export interface ModerationAttempt {
+  id: number, post_id: number | null, status: string, reason: string | null,
+  ip_hash_short: string, content: string | null, created_at: string
+}
+export interface CommentMute {
+  id: number, ip_hash_short: string, reason: string | null, muted_until: string, mute_count: number, created_at: string
+}
+export interface ModerationOverview { pending_comments: PendingComment[], attempts: ModerationAttempt[], mutes: CommentMute[] }
+
 export interface CommentChallenge {
   token: string
   honeypot_field: string

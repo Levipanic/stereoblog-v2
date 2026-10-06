@@ -9,6 +9,7 @@ const busy = ref(false)
 const checking = ref(true)
 const checkFailed = ref(false)
 const postsVersion = ref(0)
+const pendingCount = ref<number | null>(null)
 const error = ref<MessageKey | null>(null)
 const heading = useTemplateRef<HTMLElement>('heading')
 const password = useTemplateRef<HTMLInputElement>('password')
@@ -57,11 +58,12 @@ onMounted(() => run(check, true))
       </form>
       <div v-else class="admin-home">
         <button type="button" :disabled="busy" @click="run(logout)">{{ t(busy ? 'adminWorking' : 'adminLogout') }}</button>
-        <nav :aria-label="t('admin')"><a v-for="section in sections" :key="section.id" :href="`#admin-${section.id}`">{{ t(section.label) }}</a></nav>
+        <nav :aria-label="t('admin')"><a v-for="section in sections" :key="section.id" :href="`#admin-${section.id}`">{{ t(section.label) }}<span v-if="section.id === 'moderation' && pendingCount !== null"> ({{ pendingCount }})</span></a></nav>
         <section v-for="section in sections" :id="`admin-${section.id}`" :key="section.id">
           <h2>{{ t(section.label) }}</h2>
           <LazyAdminComposer v-if="section.id === 'write'" @saved="postsVersion++" />
           <LazyAdminPosts v-else-if="section.id === 'posts'" :revision="postsVersion" />
+          <LazyAdminModeration v-else-if="section.id === 'moderation'" @count="pendingCount = $event" />
           <p v-else>{{ t('adminUpcoming') }}</p>
         </section>
       </div>

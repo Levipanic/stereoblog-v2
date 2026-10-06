@@ -124,5 +124,6 @@ device-local draft recovery, shared-renderer preview, publication and existing-p
 management. Updates preserve published slugs and untouched media; deletion requires
 confirmation. Unsupported legacy blocks prevent editing instead of being dropped.
 New and existing-post drafts are separate and never autosave to the public API.
-Moderation and backup UI remain subsequent tasks. Owner acceptance, including a
-real-phone media-picker pass, is still pending.
+V2-509 provides pending-comment review, approve/reject, confirmed thread deletion,
+recent attempts and unmute controls, with short hashes only. Backup UI remains
+V2-510. Owner acceptance, including a real-phone media-picker pass, is still pending.
