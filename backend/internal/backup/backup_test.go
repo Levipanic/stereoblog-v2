@@ -53,35 +53,7 @@ func TestBackupRestorePreservesV1DataAndMedia(t *testing.T) {
 	if err != nil || info.Mode().Perm() != 0600 {
 		t.Fatal("archive permissions")
 	}
-	z, err := zip.OpenReader(archive.Path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer z.Close()
-	restore := t.TempDir()
-	for _, file := range z.File {
-		if strings.Contains(file.Name, ".env") || strings.Contains(file.Name, ".upload-") || strings.Contains(file.Name, "..") {
-			t.Fatalf("unsafe entry %s", file.Name)
-		}
-		dest := filepath.Join(restore, filepath.FromSlash(file.Name))
-		if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
-			t.Fatal(err)
-		}
-		src, err := file.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		out, err := os.Create(dest)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = io.Copy(out, src)
-		src.Close()
-		out.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
+	restore := extractBackup(t, archive.Path)
 	var manifest Manifest
 	raw, err := os.ReadFile(filepath.Join(restore, "manifest.json"))
 	if err != nil || json.Unmarshal(raw, &manifest) != nil {
@@ -127,6 +99,83 @@ func TestBackupRestorePreservesV1DataAndMedia(t *testing.T) {
 	archive.Close()
 	if _, err := os.Stat(archive.directory); !os.IsNotExist(err) {
 		t.Fatal("temporary resources leaked")
+	}
+}
+
+func extractBackup(t *testing.T, archivePath string) string {
+	t.Helper()
+	z, err := zip.OpenReader(archivePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer z.Close()
+	restore := t.TempDir()
+	for _, file := range z.File {
+		if !filepath.IsLocal(file.Name) || strings.Contains(file.Name, ".env") || strings.Contains(file.Name, ".upload-") || strings.Contains(file.Name, "..") {
+			t.Fatalf("unsafe entry %s", file.Name)
+		}
+		dest := filepath.Join(restore, filepath.FromSlash(file.Name))
+		if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
+			t.Fatal(err)
+		}
+		src, err := file.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		out, err := os.Create(dest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = io.Copy(out, src)
+		src.Close()
+		out.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	return restore
+}
+
+// The browser test supplies the actual downloaded ZIP, exercising the same restore path.
+func TestBrowserDownloadedBackup(t *testing.T) {
+	path := os.Getenv("STEREODAMAGE_TEST_BACKUP")
+	if path == "" {
+		t.Skip("run by the browser backup test")
+	}
+	restore := extractBackup(t, path)
+	ctx := context.Background()
+	var manifest Manifest
+	raw, err := os.ReadFile(filepath.Join(restore, "manifest.json"))
+	if err != nil || json.Unmarshal(raw, &manifest) != nil {
+		t.Fatal("invalid manifest")
+	}
+	if manifest.FormatVersion != 1 || manifest.SchemaVersion != 2 {
+		t.Fatalf("manifest %#v", manifest)
+	}
+	snapshot := filepath.Join(restore, "data", "blog.db")
+	raw, err = os.ReadFile(snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(raw)
+	if hex.EncodeToString(sum[:]) != manifest.DatabaseSHA256 {
+		t.Fatal("snapshot checksum mismatch")
+	}
+	report, err := database.Audit(ctx, snapshot, filepath.Join(restore, "uploads"))
+	if err != nil || !report.Compatible() || report.Posts != manifest.Posts || report.Comments != manifest.Comments {
+		t.Fatalf("restore audit: %#v %v", report, err)
+	}
+	restored, schema, err := database.Open(ctx, snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restored.Close()
+	if migration, err := database.Migrate(ctx, restored, snapshot, schema, false); err != nil || migration.Applied != 0 {
+		t.Fatalf("restored startup migration: %#v %v", migration, err)
+	}
+	entries, _ := os.ReadDir(filepath.Join(restore, "uploads"))
+	if len(entries) != manifest.MediaFiles {
+		t.Fatal("media count mismatch")
 	}
 }
 

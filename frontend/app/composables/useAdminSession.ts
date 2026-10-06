@@ -1,4 +1,4 @@
-import { ApiError, createApiRequest } from '~/utils/api'
+import { ApiError, createApiRequest, type RequestOptions } from '~/utils/api'
 
 interface AdminSession { authenticated: boolean, csrf_token?: string }
 
@@ -7,9 +7,9 @@ export function useAdminSession() {
   const session = useState<AdminSession>('admin-session', () => ({ authenticated: false }))
   const request = createApiRequest(config.public.apiBase)
 
-  async function adminRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', body?: object) {
+  async function adminRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', body?: object, options: RequestOptions = {}) {
     try {
-      return await request<T>(`/admin${path}`, { method, headers: { 'X-CSRF-Token': session.value.csrf_token ?? '' } }, body)
+      return await request<T>(`/admin${path}`, { ...options, method, headers: { 'X-CSRF-Token': session.value.csrf_token ?? '' } }, body)
     }
     catch (error) {
       if (error instanceof ApiError && error.status === 401) session.value = { authenticated: false }
@@ -17,7 +17,7 @@ export function useAdminSession() {
     }
   }
   const read = <T>(path: string) => adminRequest<T>(path, 'GET')
-  const write = <T>(path: string, body: object = {}, method: 'POST' | 'PUT' | 'DELETE' = 'POST') => adminRequest<T>(path, method, body)
+  const write = <T>(path: string, body: object = {}, method: 'POST' | 'PUT' | 'DELETE' = 'POST', options: RequestOptions = {}) => adminRequest<T>(path, method, body, options)
   async function check() {
     session.value = { authenticated: false }
     session.value = await request<AdminSession>('/admin/session')

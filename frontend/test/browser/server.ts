@@ -74,6 +74,7 @@ try {
   db.close()
   writeFileSync(join(directory, 'uploads', 'fixture.svg'), fixtureImage)
   writeFileSync(join(directory, 'uploads', 'fixture.txt'), 'Fixture attachment')
+  writeFileSync(join(directory, 'uploads', 'fixture.mp4'), 'Synthetic video fixture bytes')
   const wav = Buffer.alloc(44 + 16000 * 2 * 20)
   wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8)
   wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22)

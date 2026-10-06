@@ -25,7 +25,7 @@ function isErrorBody(value: unknown): value is ApiErrorBody {
     && 'message' in detail && typeof detail.message === 'string'
 }
 
-export interface RequestOptions { signal?: AbortSignal, headers?: Record<string, string>, method?: 'GET' | 'POST' | 'PUT' | 'DELETE' }
+export interface RequestOptions { signal?: AbortSignal, headers?: Record<string, string>, method?: 'GET' | 'POST' | 'PUT' | 'DELETE', responseType?: 'blob' }
 export interface FeedQuery { cursor?: string, limit?: number }
 
 // Native fetch works in Nitro and browsers; useAsyncData owns SSR payload/deduplication.
@@ -48,6 +48,10 @@ export function createApiRequest(baseURL: string, fetcher: typeof fetch = global
       throw new ApiError(0, 'network_error', 'API is unreachable.')
     }
 
+    if (response.ok && options.responseType === 'blob') {
+      if (!response.headers.get('Content-Type')?.toLowerCase().startsWith('application/zip')) throw new ApiError(502, 'invalid_response', 'API returned an invalid archive.')
+      return await response.blob() as T
+    }
     const data: unknown = await response.json().catch((error: unknown) => {
       if (options.signal?.aborted) throw error
       return null

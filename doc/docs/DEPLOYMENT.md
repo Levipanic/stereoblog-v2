@@ -145,9 +145,13 @@ Two levels:
 Owner clicks Download Backup and gets DB + uploads + manifest.
 
 The backend endpoint is `POST /api/v1/admin/backup`, authenticated by the admin
-session cookie and `X-CSRF-Token`. The admin button is a later frontend task; it
-can already be exercised using an authenticated HTTP client. Save the response
-as a ZIP only after checking for HTTP 200 (errors use the normal JSON envelope).
+session cookie and `X-CSRF-Token`. In `/admin`, open Backup and choose Download full
+backup. Keep the page open until preparation and download finish. If automatic
+download is blocked, the Save ZIP link remains available for five minutes. Errors
+and the one-per-minute limit are shown in the section; an expired session returns
+to login. The browser holds the archive as a Blob until download handoff, so large
+archives require sufficient client storage/memory. An authenticated HTTP client
+can also save the response as ZIP after checking for HTTP 200 (errors use JSON).
 
 Generation requires temporary disk space for one SQLite snapshot plus the ZIP.
 Set the service's `TMPDIR` to a private writable location with sufficient space

@@ -64,7 +64,7 @@ onMounted(() => run(check, true))
           <LazyAdminComposer v-if="section.id === 'write'" @saved="postsVersion++" />
           <LazyAdminPosts v-else-if="section.id === 'posts'" :revision="postsVersion" />
           <LazyAdminModeration v-else-if="section.id === 'moderation'" @count="pendingCount = $event" />
-          <p v-else>{{ t('adminUpcoming') }}</p>
+          <LazyAdminBackup v-else-if="section.id === 'backup'" />
         </section>
       </div>
     </template>

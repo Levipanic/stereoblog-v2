@@ -1720,7 +1720,16 @@ Port moderation functionality without letting it dominate daily posting UX.
 
 ---
 
-## [ ] V2-510 — Admin full-backup UI
+## [-] V2-510 — Admin full-backup UI
+
+Implemented authenticated ZIP download with CSRF, preparation/download status,
+duplicate-request guard, rate/error handling and a temporary manual-save fallback.
+The client permits the backend's 15-minute deadline and cancels on leaving admin.
+RU/EN desktop/mobile Chromium checks restore the actual downloaded archive through
+the Go ZIP/checksum/SQLite audit/startup checks. Typecheck, 20 frontend unit tests,
+production build, admin-session browser checks and Go backup/API tests/vet pass.
+Awaiting owner acceptance on a real phone. The browser retains a full Blob until
+download handoff; streaming is deferred until archive sizes justify it.
 
 **Depends on:** V2-212, V2-501
 

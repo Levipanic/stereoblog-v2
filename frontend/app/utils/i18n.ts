@@ -1,4 +1,11 @@
 const ru = {
+  backupContents: 'Полный ZIP-бэкап: база SQLite, папка uploads и манифест. Настройки окружения и пароли не включены. Храните архив приватно.',
+  backupDownload: 'Скачать полный бэкап',
+  backupWorking: 'Готовим бэкап…',
+  backupWait: 'Подготовка и загрузка могут занять несколько минут. Оставьте страницу открытой.',
+  backupLimited: 'Бэкап уже создаётся или недавно был скачан. Подождите минуту и повторите.',
+  backupReady: 'Архив готов. Если скачивание не началось, сохраните его по ссылке (доступна 5 минут).',
+  backupSave: 'Сохранить ZIP',
   pendingComments: 'Ожидают проверки',
   noPendingComments: 'Нет комментариев на проверке.',
   moderationBounded: 'Показана последняя выборка в пределах лимита сервера. После действий список обновляется.',
@@ -171,6 +178,13 @@ const ru = {
 export type MessageKey = keyof typeof ru
 
 const en: Record<MessageKey, string> = {
+  backupContents: 'Full ZIP backup: SQLite database, uploads and manifest. Environment settings and passwords are excluded. Keep the archive private.',
+  backupDownload: 'Download full backup',
+  backupWorking: 'Preparing backup…',
+  backupWait: 'Preparation and download may take several minutes. Keep this page open.',
+  backupLimited: 'A backup is running or was downloaded recently. Wait a minute and retry.',
+  backupReady: 'Archive ready. If downloading did not start, save it using the link (available for 5 minutes).',
+  backupSave: 'Save ZIP',
   pendingComments: 'Pending comments',
   noPendingComments: 'No pending comments.',
   moderationBounded: 'Showing the latest records within the server limit. The list refreshes after actions.',

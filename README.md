@@ -125,5 +125,7 @@ management. Updates preserve published slugs and untouched media; deletion requi
 confirmation. Unsupported legacy blocks prevent editing instead of being dropped.
 New and existing-post drafts are separate and never autosave to the public API.
 V2-509 provides pending-comment review, approve/reject, confirmed thread deletion,
-recent attempts and unmute controls, with short hashes only. Backup UI remains
-V2-510. Owner acceptance, including a real-phone media-picker pass, is still pending.
+recent attempts and unmute controls, with short hashes only. V2-510 adds full ZIP
+backup download with wait/error feedback and duplicate-request protection; browser
+checks restore the downloaded archive and audit its database/media. Owner acceptance,
+including real-phone media-picker and download checks, is still pending.

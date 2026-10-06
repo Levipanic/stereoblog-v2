@@ -3,7 +3,16 @@ import { createServer } from 'node:http'
 import { once } from 'node:events'
 import test from 'node:test'
 
-import { ApiError, createPublicApi } from '../app/utils/api.ts'
+import { ApiError, createApiRequest, createPublicApi } from '../app/utils/api.ts'
+
+test('archive requests preserve bytes and reject HTML or typed API failures', async () => {
+  const request = createApiRequest('/api/v1', async () => new Response(new Uint8Array([80, 75, 3, 4]), { headers: { 'Content-Type': 'application/zip' } }))
+  assert.deepEqual(new Uint8Array(await (await request<Blob>('/admin/backup', { responseType: 'blob' }, {})).arrayBuffer()), new Uint8Array([80, 75, 3, 4]))
+  for (const response of [new Response('<html>Not an archive</html>'), Response.json({ error: { code: 'unauthorized', message: 'Sign in' } }, { status: 401 })]) {
+    const bad = createApiRequest('/api/v1', async () => response)
+    await assert.rejects(bad('/admin/backup', { responseType: 'blob' }, {}), ApiError)
+  }
+})
 
 test('client speaks the Go contract over HTTP, including pending and typed errors', async (t) => {
   const requests: string[] = []
