@@ -1625,7 +1625,12 @@ Preview what will actually be published without maintaining a second fake render
 
 ---
 
-## [ ] V2-507 — Publish new post workflow
+## [-] V2-507 — Publish new post workflow
+
+Implemented validated explicit publication, preview-media selection, CSRF writes,
+busy/double-submit guard and canonical success link. Errors preserve the draft;
+only confirmed success clears it. Desktop/mobile RU/EN real-API scenarios pass.
+Awaiting owner acceptance.
 
 **Depends on:** V2-209, V2-505, V2-506
 
@@ -1651,7 +1656,13 @@ Turn a draft into a canonical post confidently.
 
 ---
 
-## [ ] V2-508 — Existing post list/edit/update workflow
+## [-] V2-508 — Existing post list/edit/update workflow
+
+Implemented cursor list, guarded canonical loading, existing-post draft recovery,
+shared editor/preview, update with immutable slug and confirmed deletion. Unsupported
+legacy content is refused before editing rather than silently lost. Real-API browser
+checks cover legacy bold conversion, unchanged media/spoilers/cover, network recovery,
+pagination and delete cancellation on desktop/mobile. Awaiting owner acceptance.
 
 **Depends on:** V2-209, V2-502, V2-506
 

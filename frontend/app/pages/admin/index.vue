@@ -8,6 +8,7 @@ const secret = ref('')
 const busy = ref(false)
 const checking = ref(true)
 const checkFailed = ref(false)
+const postsVersion = ref(0)
 const error = ref<MessageKey | null>(null)
 const heading = useTemplateRef<HTMLElement>('heading')
 const password = useTemplateRef<HTMLInputElement>('password')
@@ -59,7 +60,8 @@ onMounted(() => run(check, true))
         <nav :aria-label="t('admin')"><a v-for="section in sections" :key="section.id" :href="`#admin-${section.id}`">{{ t(section.label) }}</a></nav>
         <section v-for="section in sections" :id="`admin-${section.id}`" :key="section.id">
           <h2>{{ t(section.label) }}</h2>
-          <LazyAdminComposer v-if="section.id === 'write'" />
+          <LazyAdminComposer v-if="section.id === 'write'" @saved="postsVersion++" />
+          <LazyAdminPosts v-else-if="section.id === 'posts'" :revision="postsVersion" />
           <p v-else>{{ t('adminUpcoming') }}</p>
         </section>
       </div>

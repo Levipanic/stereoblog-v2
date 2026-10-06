@@ -15,7 +15,7 @@ import type { Block, MediaKind } from '~/types/api'
 import { blocksToDocument, documentToBlocks } from '~/utils/editor'
 import { safeLink } from '~/utils/content'
 
-const props = defineProps<{ blocks: Block[] }>()
+const props = defineProps<{ blocks: Block[], disabled?: boolean }>()
 const emit = defineEmits<{ change: [blocks: Block[]], invalid: [], uploading: [value: boolean] }>()
 const { t } = useReaderSettings()
 const invalid = ref(false)
@@ -43,6 +43,7 @@ const editor = useEditor({
   },
 })
 onBeforeUnmount(() => editor.value?.destroy())
+watch(() => props.disabled, value => editor.value?.setEditable(!value && !uploading.value))
 function chooseMedia() {
   insertAt = editor.value?.state.selection.from ?? 0
   picker.value?.click()

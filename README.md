@@ -119,6 +119,10 @@ private navigation in RU/EN. Credentials are not stored in localStorage.
 V2-502–503 add a client-only Tiptap writing surface with a title, rich formatting,
 headings/quotes/dividers, undo/redo, media placeholders and secondary slug settings.
 Explicit adapters retain StereoDamage blocks as the storage contract; editor code
-loads only after admin login. This surface does not yet save or publish: leaving
-loses the text. Autosave, uploads, preview, publishing, post management, moderation
-and backup UI remain subsequent tasks.
+loads only after admin login. V2-504–508 add direct uploads and media metadata/order,
+device-local draft recovery, shared-renderer preview, publication and existing-post
+management. Updates preserve published slugs and untouched media; deletion requires
+confirmation. Unsupported legacy blocks prevent editing instead of being dropped.
+New and existing-post drafts are separate and never autosave to the public API.
+Moderation and backup UI remain subsequent tasks. Owner acceptance, including a
+real-phone media-picker pass, is still pending.

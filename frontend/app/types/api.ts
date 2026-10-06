@@ -59,6 +59,8 @@ export interface Post extends PostSummary {
   blocks: Block[]
 }
 
+export type AdminPost = Pick<Post, 'id' | 'title' | 'slug' | 'blocks' | 'preview_media' | 'created_at'>
+
 export interface CommentChallenge {
   token: string
   honeypot_field: string
