@@ -78,6 +78,7 @@ Keep changes easy to undo.
 
 - One branch or clearly bounded commit series per backlog task.
 - Do not mix multiple large backlog tasks in one commit.
+- On a shared remote branch, add ordinary task commits and push fast-forward; do not rewrite published history.
 - Tag known-good milestones, especially before database migrations and before production cutover.
 - Keep production data out of git.
 
