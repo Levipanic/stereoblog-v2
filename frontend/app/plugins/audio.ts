@@ -51,5 +51,15 @@ export default defineNuxtPlugin(() => {
     media?.load()
   }
   function failed() { if (state.track && media?.error) { state.failed = true; state.paused = true } }
-  return { provide: { audio: { state, attach, sync, volumeChanged, setVolume, pause, play, close, failed } } }
+  function seek(value: number) {
+    if (!media || !Number.isFinite(media.duration)) return
+    media.currentTime = Math.max(0, Math.min(media.duration, value))
+    sync()
+  }
+  function toggle() {
+    if (!state.track) return
+    if (state.paused) void play(state.track.src, state.track.title)
+    else pause()
+  }
+  return { provide: { audio: { state, attach, sync, volumeChanged, setVolume, pause, play, close, failed, seek, toggle } } }
 })

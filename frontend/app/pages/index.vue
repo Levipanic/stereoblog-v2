@@ -15,7 +15,24 @@ let controller = new AbortController()
 onBeforeUnmount(() => controller.abort())
 onBeforeRouteLeave(() => { controller.abort() })
 onDeactivated(() => controller.abort())
-onActivated(() => { if (controller.signal.aborted) controller = new AbortController() })
+onActivated(() => {
+  if (controller.signal.aborted) controller = new AbortController()
+  restoreFeedScroll()
+})
+
+// KeepAlive re-attaches this page after the router's scroll restore has already run, so the
+// restore can be clamped by the still-short document (Back lands at the top). Re-apply the
+// position the feed entry remembers.
+function restoreFeedScroll() {
+  const top = (history.state as { scroll?: { top?: number } } | null)?.scroll?.top
+  if (typeof top !== 'number' || top <= 0) return
+  let attempts = 0
+  const apply = () => {
+    if (Math.abs(window.scrollY - top) > 1) window.scrollTo({ top })
+    if (++attempts < 3 && Math.abs(window.scrollY - top) > 1) requestAnimationFrame(apply)
+  }
+  requestAnimationFrame(apply)
+}
 
 async function loadMore() {
   const cursor = feed.value?.next_cursor

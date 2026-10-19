@@ -21,8 +21,13 @@ Task status notation:
 
 Owner acceptance (2026-10-05): implementation V2-207–212, V2-301–306 and
 V2-401–409 is accepted. The implementation notes below about awaiting acceptance
-are historical and superseded by this decision. Further visual refinements are
-deferred; V2-410 and later tasks remain open.
+are historical and superseded by this decision. V2-410 and later tasks remain open.
+
+Owner decision (2026-10-19): the v1 visual language stays, with only small
+usability improvements; the earlier "visual refinements deferred" note is
+superseded for parity work. The v1 font is self-hosted, the audio waveform is a
+launch feature, and cover/preview media selection is required at launch
+(V2-411, V2-412, V2-507/508). Redesign stays out of scope.
 
 | Phase | Purpose | Gate before continuing |
 |---|---|---|
@@ -1230,7 +1235,7 @@ Make images feel first-class without a heavy gallery dependency.
 
 ## [x] V2-405 — Global persistent audio engine and mini-player
 
-Implemented and checked; awaiting owner acceptance. Native transport controls; optional waveform deferred.
+Implemented and checked; awaiting owner acceptance. Native transport controls; the waveform is no longer deferred and is rebuilt in V2-412 (owner decision 2026-10-19).
 
 **Depends on:** V2-401, V2-306
 
@@ -1249,7 +1254,7 @@ Rebuild the beloved but brittle v1 audio concept around Nuxt's persistent app li
 - mini-player appears when active/progress meaningful;
 - play/pause/seek/volume/close;
 - preserve/migrate audio volume preference;
-- optional waveform progressive enhancement implemented efficiently or deferred behind a clean interface.
+- waveform progressive enhancement behind a clean interface; V2-412 owns the proper implementation and its acceptance.
 
 ### Acceptance criteria
 
@@ -1388,8 +1393,9 @@ Never break old social links already shared by owner.
 
 Implemented and checked: recoverable article failures have retry and correct page
 titles; settings scroll within short viewports. RU/EN, both themes, reduced motion,
-storage failure and desktop/mobile browser checks pass. Visual refinements remain
-deferred by the owner; awaiting acceptance of this functional polish pass.
+storage failure and desktop/mobile browser checks pass. Visual refinements were
+re-opened by the owner on 2026-10-19 and are tracked in V2-411; awaiting
+acceptance of this functional polish pass.
 
 **Depends on:** V2-402 through V2-409
 
@@ -1412,6 +1418,126 @@ Bring public experience to cohesive feature parity before admin rewrite dominate
 - representative public E2E passes in RU and EN UI.
 - dark/light checked.
 - mobile no obvious overflow/overlap.
+
+## [-] V2-411 — v1 visual parity pass and self-hosted font
+
+**Depends on:** V2-302, V2-401, V2-406, V2-408
+
+**Read:** v1 `frontend/styles.css`, v1 `frontend/index.html`, `docs/UX_SPEC.md`,
+`AGENTS.md` section 9, current `frontend/app/assets/css/main.css`
+
+Owner decision (2026-10-19): v2 keeps the v1 visual language with only small
+usability improvements. This task exists because the public rewrite shipped a
+flattened interpretation of the v1 style (system font, square controls, no
+gradients/shadows/accents), which the owner does not accept. Redesign is out of
+scope.
+
+Implementation and automated checks are complete; side-by-side owner review is
+still pending. Japanese glyphs use the system fallback to keep the self-hosted
+font small. Spoilers use a reveal button like v1. Feed-card hover keeps its color,
+border and shadow feedback but skips the 1px transform: Chromium changed the feed
+scroll position while the translated link was clicked in browser tests. The feed
+reapplies its saved position after KeepAlive activation to cover the router timing
+race.
+
+### Goal
+
+Make the public v2 UI read as the same site as v1 again, using the existing
+components, and stop depending on an external font CDN.
+
+### Scope
+
+- font: self-host `LINE Seed JP` (Google Fonts reports `cyrillic`, `greek-ext`,
+  `japanese`, `latin`, `latin-ext` subsets) with per-subset `unicode-range` and
+  `font-display: swap`; no production request to `fonts.googleapis.com` /
+  `fonts.gstatic.com`; verify the license allows self-hosting before committing
+  font files; keep storage bounded (static files, no build step on the VPS).
+- typography weights/sizes/letter-spacing matching v1 character.
+- topbar: gradient background, border/shadow treatment, brand styling.
+- page background: v1-style soft top glow and background band.
+- controls: pill radii (`999px`) for toggles/language/feed-view/like rows,
+  gradient primary buttons, v1 input styling.
+- feed card: v1 `tweet-card` character — gradient surface, thin top accent line,
+  hover color/border/shadow, italic meta line, compact like row with burst feedback.
+- article: quote/file/media/audio card styling; spoiler presentation styled like
+  v1 while staying a real keyboard-accessible control; desktop TOC panel plus
+  mobile floating button/bottom sheet behavior.
+- comments: card and nested-thread presentation parity.
+- mini-player: v1 appearance (its backdrop blur is acceptable in this one
+  component).
+- allowed small improvements: spacing, focus visibility, touch targets,
+  reduced-motion handling, contrast; no structural redesign.
+
+### Acceptance criteria
+
+- side-by-side with v1 at 360/768/1280 in both themes, the feed, article,
+  comments, audio and TOC surfaces read as the same site.
+- no external font request in a production build; the font applies to RU and EN
+  UI text (both subsets are covered).
+- existing browser/SSR checks pass; mobile and light/dark checks still cover the
+  touched surfaces.
+- no overflow/overlap at 360px; focus, keyboard and reduced-motion basics intact.
+
+### Tests/checks
+
+- `make test`, `make check`, `make e2e`.
+- owner side-by-side review against v1; the owner's eye is the acceptance.
+
+### Do not
+
+- Do not change the palette, page structure, or unrelated product behavior.
+- Do not add a UI framework or a new runtime dependency.
+- Do not touch admin-only visuals; V2-511 owns admin polish.
+- Do not "modernize" the design; this is parity work.
+
+---
+
+## [ ] V2-412 — Audio waveform rebuild
+
+**Depends on:** V2-405, V2-411
+
+**Read:** v1 audio code, `docs/UX_SPEC.md` audio section
+
+Owner decision (2026-10-19): the v1 waveform is kept as a launch feature, but
+rebuilt instead of ported as-is. V2-405 currently ships native transport controls
+only.
+
+### Goal
+
+Restore waveform presentation and seek with a clean implementation that respects
+phone battery and a 1 vCPU / 2 GB VPS.
+
+### Scope
+
+- decide the peaks source with a short measurement: decode-once on the client
+  with cached peaks vs precomputed peaks; document the decision in the task
+  summary;
+- draw bars matching the v1 look, with progress and seek;
+- cache per track so repeat visits and feed rendering do not redo the work;
+- release cached/decoded data when the track is closed;
+- fall back to the plain progress bar whenever waveform data is unavailable or
+  fails;
+- keep the V2-405 global-state contract untouched (one track, no duplicate
+  elements, inline and mini-player stay in sync).
+
+### Acceptance criteria
+
+- a real audio post shows a waveform on phone and desktop; tapping seeks.
+- playback, mini-player and route navigation behave exactly as accepted in
+  V2-405.
+- waveform work is bounded: no eager decode of every feed audio item, no
+  re-decode on every visit, no unbounded memory growth.
+- waveform failure never blocks playback (existing fallback remains).
+
+### Do not
+
+- Do not add an external service, CDN, or heavyweight runtime dependency.
+- Do not change the canonical content model or upload pipeline unless the
+  measured decision requires upload-time peaks; if it does, keep it additive and
+  bounded.
+- Do not block audio playback or page render on waveform readiness.
+
+---
 
 ### Phase 4 gate
 
@@ -1588,7 +1714,9 @@ Author should not fear losing a writing session.
 - distinguish editing published post from unpublished local draft;
 - avoid public write until explicit publish/update.
 
-Optionally introduce server draft persistence only if clearly justified and scoped; it is not required merely to satisfy autosave.
+Owner decision (2026-10-19): local autosave is required for launch. Cross-device
+server drafts and draft version history are post-launch bonuses, not acceptance
+criteria; do not add server draft storage in this task.
 
 ### Acceptance criteria
 
@@ -1642,7 +1770,7 @@ Turn a draft into a canonical post confidently.
 
 - validate title/content;
 - generate/show optional slug setting;
-- preview media selection/auto strategy;
+- cover/preview media selection: automatic, chosen from post blocks, or uploaded cover (v1 parity);
 - authenticated+CSRF create request;
 - prevent double submit;
 - success opens canonical post/admin success state and clears matching draft safely.
@@ -1651,6 +1779,7 @@ Turn a draft into a canonical post confidently.
 
 - create a real rich/media post and public page renders it.
 - slug canonical URL stable.
+- chosen cover/preview media is what the feed card and share metadata use.
 - network error does not lose local draft.
 - double click cannot create duplicate posts.
 
@@ -1678,7 +1807,7 @@ Edit old migrated v1 posts and new v2 posts through the same friendly editor.
 - update;
 - delete with explicit confirmation;
 - published slug remains stable on title edits;
-- preview media preserved/adjustable.
+- cover/preview media preserved and adjustable from the same screen (v1 parity, mobile-friendly).
 
 ### Acceptance criteria
 

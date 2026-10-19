@@ -247,7 +247,7 @@ Rules:
 - route changes must not spawn duplicate `<audio>` elements;
 - user gesture/autoplay browser rules are respected;
 - volume preference is local and can reuse/migrate v1 key;
-- waveform is optional progressive enhancement; playback must work if waveform generation fails;
+- waveform is a launch feature (V2-412) that must degrade to a plain progress bar; playback must work if waveform generation fails;
 - do not decode huge audio files eagerly just to draw a waveform;
 - closing the mini player stops/releases playback deliberately.
 

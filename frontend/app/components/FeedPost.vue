@@ -17,7 +17,9 @@ const likes = ref(props.post.likes)
 const pending = ref(false)
 const hydrated = ref(false)
 const feedback = ref<MessageKey | null>(null)
+const burst = ref(false)
 const controller = new AbortController()
+let burstTimer: ReturnType<typeof setTimeout> | undefined
 
 watch(() => props.post.likes, value => { likes.value = value })
 watch(mediaSrc, () => { imageFailed.value = false })
@@ -26,7 +28,10 @@ onMounted(() => {
   // An eager SSR image can fail before Vue attaches its error listener.
   if (previewImage.value?.complete && previewImage.value.naturalWidth === 0) imageFailed.value = true
 })
-onBeforeUnmount(() => controller.abort())
+onBeforeUnmount(() => {
+  controller.abort()
+  if (burstTimer) clearTimeout(burstTimer)
+})
 
 async function like() {
   if (pending.value) return
@@ -36,6 +41,9 @@ async function like() {
     const result = await api.likePost(props.post.id, { signal: controller.signal })
     likes.value = result.likes
     feedback.value = 'likeSaved'
+    burst.value = true
+    if (burstTimer) clearTimeout(burstTimer)
+    burstTimer = setTimeout(() => { burst.value = false }, 800)
   }
   catch (error) {
     if (controller.signal.aborted) return
@@ -78,6 +86,7 @@ async function like() {
     <div class="post-actions">
       <NuxtLink class="read-post" :to="path" :prefetch="false">{{ t('openPost') }} <span aria-hidden="true">→</span></NuxtLink>
       <button type="button" :disabled="pending || !hydrated" :aria-label="t('likePost', { title: post.title })" :aria-busy="pending" @click="like">
+        <span v-if="burst" class="like-burst-heart" aria-hidden="true">♥</span>
         <span aria-hidden="true">♡</span> {{ t('like') }} · <span class="like-count">{{ likes }}</span>
       </button>
       <NuxtLink class="comment-count" :to="`${path}#comments`" :prefetch="false">{{ t('comments', { count: post.comment_count }) }}</NuxtLink>

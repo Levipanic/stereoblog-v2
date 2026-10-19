@@ -19,6 +19,8 @@ Do not treat this as relevant only on launch day; use it to expose unfinished wo
 - [ ] Images/GIF/video/audio/files render.
 - [ ] Spoilers render.
 - [ ] Preview media works.
+- [ ] Font is self-hosted (no external font CDN request) and covers RU/EN text.
+- [ ] v1 visual language preserved (topbar/controls/cards/audio/TOC) on phone and desktop.
 - [ ] Likes work.
 - [ ] Comments and nested replies render.
 - [ ] Comment likes work.
@@ -52,7 +54,8 @@ Do not treat this as relevant only on launch day; use it to expose unfinished wo
 - [ ] Mini player state stays in sync.
 - [ ] Seek/pause/volume work.
 - [ ] Close stops/releases playback.
-- [ ] Waveform failure does not break playback.
+- [ ] Waveform draws and seeks on phone/desktop.
+- [ ] Waveform failure falls back to the progress bar without interrupting playback.
 - [ ] Mobile fixed player does not cover critical UI.
 
 ## Admin/security
@@ -74,6 +77,7 @@ Do not treat this as relevant only on launch day; use it to expose unfinished wo
 - [ ] Heading/quote/divider works.
 - [ ] Image/video/audio/file insertion occurs at intended position.
 - [ ] Caption/alt/spoiler behavior preserved.
+- [ ] Cover/preview media can be auto, from blocks, or uploaded.
 - [ ] Autosave/resume works.
 - [ ] Preview matches public renderer.
 - [ ] Existing v1 post can be edited and saved safely.

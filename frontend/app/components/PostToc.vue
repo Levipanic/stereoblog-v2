@@ -8,12 +8,17 @@ const disclosure = useTemplateRef<HTMLDetailsElement>('disclosure')
 const active = ref('')
 let dispose: (() => void) | undefined
 
+function narrow() { return window.matchMedia('(max-width: 979px)').matches }
+function close() { if (disclosure.value?.open) disclosure.value.open = false }
+function backdrop(event: MouseEvent) {
+  if (narrow() && event.target === disclosure.value) close()
+}
 function select(id: string) {
   active.value = id
-  if (window.matchMedia('(max-width: 1099px)').matches && disclosure.value) disclosure.value.open = false
+  if (narrow()) close()
 }
 onMounted(() => {
-  const wide = window.matchMedia('(min-width: 1100px)')
+  const wide = window.matchMedia('(min-width: 980px)')
   const sync = () => { if (disclosure.value) disclosure.value.open = wide.matches }
   sync()
   wide.addEventListener('change', sync)
@@ -29,7 +34,7 @@ onBeforeUnmount(() => dispose?.())
 
 <template>
   <nav class="post-toc" :aria-label="t('contents')">
-    <details ref="disclosure">
+    <details ref="disclosure" @click="backdrop" @keydown.esc.prevent="close">
       <summary>{{ t('contents') }}</summary>
       <ol>
         <li v-for="heading in headings" :key="heading.id" :class="{ 'toc-nested': heading.level > 1 }">

@@ -6,6 +6,7 @@ data, local media, anonymous comments, and visual identity without carrying
 over the v1 Express/vanilla-JS architecture.
 
 Project contracts and the implementation backlog live in [`doc/`](doc/).
+New contributors can start with [`doc/START_HERE.md`](doc/START_HERE.md).
 The local `old_repo/` directory is an ignored v1 and production-snapshot
 reference; never commit its contents or modify the only production copy.
 
@@ -75,7 +76,7 @@ and antispam, admin sessions/CSRF, post CRUD, uploads, moderation, and full back
 See [`doc/docs/BACKEND_API.md`](doc/docs/BACKEND_API.md) for endpoint contracts and
 [`doc/docs/DEPLOYMENT.md`](doc/docs/DEPLOYMENT.md#admin-portable-backup) for restore steps.
 Backend Phase 2 is implemented and accepted by the owner;
-the remaining Nuxt UI and deployment/release work is tracked in the backlog.
+the backlog tracks the current public/admin review and remaining release work.
 
 ## Public frontend status
 
@@ -96,8 +97,9 @@ and 90% completion threshold, with a continue-reading action and feed status.
 Images load lazily into reserved frames and open in a native keyboard/touch-friendly
 dialog. A single app-level audio element continues across Nuxt navigation; article/feed
 buttons control the same track. The native mini-player provides transport/seek, a volume
-control preserving the v1 key, and close/release. Optional waveform rendering is deferred.
-No audio is fetched before interaction and no autoplay is attempted after a hard reload.
+control preserving the v1 key, and close/release. A waveform is a launch requirement in
+V2-412; until that task is complete, the progress bar remains the fallback. No audio is
+fetched before interaction and no autoplay is attempted after a hard reload.
 Public discussion supports anonymous/named comments, replies, likes and pending moderation.
 Discussion links keep their position through late layout changes until reader interaction.
 Sharing uses native Web Share or clipboard/manual fallback. Article canonical/Open Graph/
@@ -106,9 +108,10 @@ The fallback share image is the committed `frontend/public/og-default.png`; rege
 from the SVG using `node frontend/scripts/generate-og.ts` with Playwright Chromium installed.
 Legacy links redirect to canonical slugs. V2-410 functional polish is implemented:
 article failures can be retried, and settings fit short viewports; RU/EN and both
-themes have desktop/mobile browser checks.
-Implementation through V2-409 is accepted by the owner; further visual refinements
-will follow separately from the admin/editor work.
+themes have desktop/mobile browser checks. V2-411 restores the v1 public visual language
+and self-hosts LINE Seed JP for RU/EN; side-by-side owner review is pending. The feed
+keeps its saved position across same-session navigation, including after KeepAlive
+reactivation. V2-412 owns the waveform rebuild; no waveform is claimed as implemented.
 
 ## Private admin status
 
