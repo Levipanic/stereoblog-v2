@@ -12,6 +12,8 @@ data/*
 uploads/*
 !uploads/.gitkeep
 backups/
+# Local production snapshots for migration testing: never commit
+blog-backup-*.tar.gz
 *.db
 *.db-*
 *.sqlite
