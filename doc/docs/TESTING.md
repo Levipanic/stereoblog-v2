@@ -148,18 +148,18 @@ At least automated/integration coverage for:
 
 ## Test commands
 
-Bootstrap tasks must define simple root commands, ideally something like:
+Use the verified root commands:
 
 ```text
 make test
-make test-backend
-make test-frontend
+make check
 make e2e
-make lint
 make build
 ```
 
-Exact tooling can differ, but the owner should not need to remember six nested package commands.
+`make check` runs the Go tests, frontend typecheck and unit tests, then `go vet`.
+There is no separate linter target. `make test-backend` and `make test-frontend`
+are available for focused work.
 
 ## Definition of tested
 

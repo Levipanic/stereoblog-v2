@@ -4,15 +4,18 @@ This file is for the project owner. The goal is to make the rewrite easy to supe
 
 ## Before starting
 
-Create a new v2 repository. It may be created from a GitHub fork for convenience, but treat it as a **new project**, not a continuation of the v1 architecture.
+This is the existing v2 repository; do not create another repository or copy the
+agent pack into it. For setup and commands, start with
+[`START_HERE.md`](START_HERE.md) and the root [`README.md`](../README.md).
 
-Recommended practical setup:
-
-1. Create the v2 repo.
-2. Copy this agent pack into it.
-3. Keep `https://github.com/Levipanic/blog_proj` available as the v1 reference.
-4. Put a **copy**, never the only copy, of the production `data/blog.db` and `uploads/` somewhere local for migration testing.
-5. Never give an agent the real production `.env` or secret unless the environment genuinely requires it.
+1. Check `git status` and preserve any existing local changes.
+2. Read `doc/AGENTS.md`, the relevant nested agent file, and the active task in
+   `doc/BACKLOG.md`.
+3. Keep the v1 repository available as a behavior reference.
+4. Use only a **copy** of production `data/blog.db` and `uploads/` for migration
+   testing; never use the only production copy.
+5. Never give an agent the real production `.env` or secret unless the environment
+   genuinely requires it.
 
 ## The one-task loop
 
@@ -78,7 +81,8 @@ Keep changes easy to undo.
 
 - One branch or clearly bounded commit series per backlog task.
 - Do not mix multiple large backlog tasks in one commit.
-- On a shared remote branch, add ordinary task commits and push fast-forward; do not rewrite published history.
+- `main` blocks force-pushes/deletion and requires linear history; direct fast-forward pushes remain allowed.
+- Add ordinary task commits and push fast-forward; do not rewrite published history.
 - Tag known-good milestones, especially before database migrations and before production cutover.
 - Keep production data out of git.
 

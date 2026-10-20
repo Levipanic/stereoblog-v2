@@ -72,7 +72,7 @@ backend/
     backup/
     storage/
       sqlite/
-  migrations/
+        migrate.go  # ordered migration list; no backend/migrations/ directory
 ```
 
 Avoid a giant `main.go`/`server.go`, but also avoid dozens of one-function packages.

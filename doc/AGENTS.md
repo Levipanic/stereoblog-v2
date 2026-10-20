@@ -116,7 +116,7 @@ Target a simple monorepo:
   backend/
     cmd/server/
     internal/
-    migrations/
+      storage/sqlite/migrate.go  # ordered migration list in this repository
   frontend/
     app/
     public/

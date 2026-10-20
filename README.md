@@ -7,8 +7,8 @@ over the v1 Express/vanilla-JS architecture.
 
 Project contracts and the implementation backlog live in [`doc/`](doc/).
 New contributors can start with [`doc/START_HERE.md`](doc/START_HERE.md).
-The local `old_repo/` directory is an ignored v1 and production-snapshot
-reference; never commit its contents or modify the only production copy.
+If present, local `old_repo/` is an ignored v1 and production-snapshot reference;
+never commit its contents or modify the only production copy.
 
 ## Requirements
 
@@ -109,9 +109,10 @@ from the SVG using `node frontend/scripts/generate-og.ts` with Playwright Chromi
 Legacy links redirect to canonical slugs. V2-410 functional polish is implemented:
 article failures can be retried, and settings fit short viewports; RU/EN and both
 themes have desktop/mobile browser checks. V2-411 restores the v1 public visual language
-and self-hosts LINE Seed JP for RU/EN; side-by-side owner review is pending. The feed
-keeps its saved position across same-session navigation, including after KeepAlive
-reactivation. V2-412 owns the waveform rebuild; no waveform is claimed as implemented.
+and self-hosts LINE Seed JP for RU/EN; the owner accepted the result on 2026-10-20,
+including the system-font fallback for Japanese glyphs. The feed keeps its saved
+position across same-session navigation, including after KeepAlive reactivation.
+V2-412 owns the waveform rebuild; no waveform is claimed as implemented.
 
 ## Private admin status
 

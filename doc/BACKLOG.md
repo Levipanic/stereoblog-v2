@@ -21,7 +21,12 @@ Task status notation:
 
 Owner acceptance (2026-10-05): implementation V2-207–212, V2-301–306 and
 V2-401–409 is accepted. The implementation notes below about awaiting acceptance
-are historical and superseded by this decision. V2-410 and later tasks remain open.
+are historical and superseded by this decision. At that time V2-410 and later
+tasks remained open.
+
+Owner acceptance (2026-10-20): V2-411 visual parity is accepted, including the
+documented system-font fallback for Japanese glyphs. V2-410 and V2-412 onward
+remain open.
 
 Owner decision (2026-10-19): the v1 visual language stays, with only small
 usability improvements; the earlier "visual refinements deferred" note is
@@ -1419,7 +1424,7 @@ Bring public experience to cohesive feature parity before admin rewrite dominate
 - dark/light checked.
 - mobile no obvious overflow/overlap.
 
-## [-] V2-411 — v1 visual parity pass and self-hosted font
+## [x] V2-411 — v1 visual parity pass and self-hosted font
 
 **Depends on:** V2-302, V2-401, V2-406, V2-408
 
@@ -1432,13 +1437,14 @@ flattened interpretation of the v1 style (system font, square controls, no
 gradients/shadows/accents), which the owner does not accept. Redesign is out of
 scope.
 
-Implementation and automated checks are complete; side-by-side owner review is
-still pending. Japanese glyphs use the system fallback to keep the self-hosted
-font small. Spoilers use a reveal button like v1. Feed-card hover keeps its color,
-border and shadow feedback but skips the 1px transform: Chromium changed the feed
-scroll position while the translated link was clicked in browser tests. The feed
-reapplies its saved position after KeepAlive activation to cover the router timing
-race.
+Owner acceptance (2026-10-20): visual parity accepted, including the system-font
+fallback for Japanese glyphs to keep the self-hosted font small. Unrevealed spoiler
+media is inert for keyboard users. Feed-card hover keeps its color, border and
+shadow feedback but skips the 1px transform: Chromium changed the feed scroll
+position while the translated link was clicked in browser tests. The feed reapplies
+its saved position after KeepAlive activation to cover the router timing race.
+Admin settings retain their original spacing. `make check` and `make e2e` pass;
+the article/discussion/TOC overflow matrix covers 360/768/1280px in both themes.
 
 ### Goal
 
