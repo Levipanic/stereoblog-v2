@@ -18,6 +18,10 @@ for (const language of ['ru', 'en']) {
       await expect(page.getByRole('button', { name: logout, exact: true })).toBeVisible()
     }
     await signIn()
+    await page.locator('.reader-settings summary').click()
+    const settingsGroups = page.locator('.reader-settings .settings-panel fieldset')
+    await expect(settingsGroups).toHaveCount(3)
+    await expect(settingsGroups.nth(1)).toHaveCSS('margin-top', '16px')
     await expect(page.locator('.admin-home nav a')).toHaveCount(4)
     expect((await context.cookies()).find(cookie => cookie.name === 'admin_session')?.httpOnly).toBe(true)
     expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toContain('browser-test-secret')

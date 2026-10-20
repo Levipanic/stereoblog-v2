@@ -15,7 +15,7 @@ const { t } = useReaderSettings()
       <blockquote v-else-if="block.type === 'quote'"><PostInline :text="block.text" :content="block.content" /></blockquote>
       <hr v-else-if="block.type === 'divider'">
       <div v-else-if="block.type === 'media'" class="media-block" :class="{ 'media-spoiler': block.spoiler, 'media-spoiler-revealed': revealed.has(index) }">
-        <div class="media-spoiler-content" :aria-hidden="block.spoiler && !revealed.has(index) ? 'true' : undefined">
+        <div class="media-spoiler-content" :inert="block.spoiler && !revealed.has(index)" :aria-hidden="block.spoiler && !revealed.has(index) ? 'true' : undefined">
           <PostMedia :block="block" :preview="preview" />
         </div>
         <button v-if="block.spoiler && !revealed.has(index)" type="button" class="media-spoiler-overlay" @click="revealed.add(index)">{{ t('revealSpoiler') }}</button>

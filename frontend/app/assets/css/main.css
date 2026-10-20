@@ -1351,6 +1351,7 @@ body.admin-page .reader-settings summary:hover,
 body.admin-page .reader-settings[open] summary { background: transparent; }
 body.admin-page .reader-settings[open] summary { border-color: currentColor; }
 body.admin-page .settings-panel { display: block; top: calc(100% + 0.5rem); z-index: auto; width: min(18rem, calc(100vw - 2rem)); padding: 1rem; border-color: var(--border); border-radius: 6px; box-shadow: 0 5px 15px #0002; }
+body.admin-page .settings-panel fieldset + fieldset { margin-top: 1rem; }
 body.admin-page .settings-panel legend { font-size: 0.875rem; font-weight: 400; }
 body.admin-page .setting-options button { min-height: 44px; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: inherit; font-weight: 400; }
 body.admin-page .setting-options button:hover { background: var(--surface-hover); }
